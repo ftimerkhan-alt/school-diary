@@ -1,0 +1,29 @@
+# Электронный дневник - .htaccess
+Options -Indexes
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Если проект в подпапке localhost, раскомментируйте строку ниже
+    # и укажите правильный путь:
+    # RewriteBase /school-diary/
+    
+    # Не обрабатывать существующие файлы и директории
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+    
+    # Всё остальное направляем на index.php
+    RewriteRule ^(.*)$ index.php?route=$1 [QSA,L]
+</IfModule>
+
+# Если mod_rewrite не работает, используем ErrorDocument
+ErrorDocument 404 /index.php
+
+AddDefaultCharset UTF-8
+
+<Files .htaccess>
+    Order Allow,Deny
+    Deny from all
+</Files>
