@@ -31,15 +31,23 @@ class ReportsController {
      * Главная страница отчётов
      */
     public function index() {
-        requireRole(['admin', 'director', 'head_teacher', 'class_teacher', 'teacher']);
-        $pageTitle = 'Отчёты и аналитика';
-        
-        $classes = $this->classModel->getAll(currentAcademicYear());
-        
-        require __DIR__ . '/../views/layout/header.php';
-        require __DIR__ . '/../views/reports/index.php';
-        require __DIR__ . '/../views/layout/footer.php';
+    requireRole(['admin', 'director', 'head_teacher', 'class_teacher']);
+    $pageTitle = 'Отчёты и аналитика';
+
+    $classes = $this->classModel->getAll(currentAcademicYear());
+
+    // Классный руководитель видит только свой класс
+    if (isClassTeacher()) {
+        $myClassId = getClassTeacherClassId();
+        $classes = array_values(array_filter($classes, function($c) use ($myClassId) {
+            return (int)$c['id'] === (int)$myClassId;
+        }));
     }
+
+    require __DIR__ . '/../views/layout/header.php';
+    require __DIR__ . '/../views/reports/index.php';
+    require __DIR__ . '/../views/layout/footer.php';
+}
     
     /**
      * Отчёт по успеваемости
@@ -49,15 +57,21 @@ class ReportsController {
         $pageTitle = 'Успеваемость';
         
         $classes = $this->classModel->getAll(currentAcademicYear());
-        $selectedClassId = (int)get('class_id', 0);
-        
-        if (isClassTeacher() && !$selectedClassId) {
-            $selectedClassId = getClassTeacherClassId() ?: 0;
-        }
-        if (!$selectedClassId && !empty($classes)) {
-            $selectedClassId = $classes[0]['id'];
-        }
-        
+$selectedClassId = (int)get('class_id', 0);
+
+// Классный руководитель может смотреть только свой класс
+if (isClassTeacher()) {
+    $myClassId = getClassTeacherClassId() ?: 0;
+    $selectedClassId = $myClassId;
+
+    $classes = array_values(array_filter($classes, function($c) use ($myClassId) {
+        return (int)$c['id'] === (int)$myClassId;
+    }));
+}
+
+if (!$selectedClassId && !empty($classes)) {
+    $selectedClassId = $classes[0]['id'];
+}
         $classInfo = null;
         $students = [];
         $subjectAverages = [];
@@ -100,14 +114,21 @@ class ReportsController {
         $pageTitle = 'Отчёт по посещаемости';
         
         $classes = $this->classModel->getAll(currentAcademicYear());
-        $selectedClassId = (int)get('class_id', 0);
-        
-        if (isClassTeacher() && !$selectedClassId) {
-            $selectedClassId = getClassTeacherClassId() ?: 0;
-        }
-        if (!$selectedClassId && !empty($classes)) {
-            $selectedClassId = $classes[0]['id'];
-        }
+$selectedClassId = (int)get('class_id', 0);
+
+// Классный руководитель может смотреть только свой класс
+if (isClassTeacher()) {
+    $myClassId = getClassTeacherClassId() ?: 0;
+    $selectedClassId = $myClassId;
+
+    $classes = array_values(array_filter($classes, function($c) use ($myClassId) {
+        return (int)$c['id'] === (int)$myClassId;
+    }));
+}
+
+if (!$selectedClassId && !empty($classes)) {
+    $selectedClassId = $classes[0]['id'];
+}
         
         $classInfo = null;
         $classStats = null;
@@ -135,14 +156,21 @@ class ReportsController {
         $pageTitle = 'Итоговая ведомость';
         
         $classes = $this->classModel->getAll(currentAcademicYear());
-        $selectedClassId = (int)get('class_id', 0);
-        
-        if (isClassTeacher() && !$selectedClassId) {
-            $selectedClassId = getClassTeacherClassId() ?: 0;
-        }
-        if (!$selectedClassId && !empty($classes)) {
-            $selectedClassId = $classes[0]['id'];
-        }
+$selectedClassId = (int)get('class_id', 0);
+
+// Классный руководитель может смотреть только свой класс
+if (isClassTeacher()) {
+    $myClassId = getClassTeacherClassId() ?: 0;
+    $selectedClassId = $myClassId;
+
+    $classes = array_values(array_filter($classes, function($c) use ($myClassId) {
+        return (int)$c['id'] === (int)$myClassId;
+    }));
+}
+
+if (!$selectedClassId && !empty($classes)) {
+    $selectedClassId = $classes[0]['id'];
+}
         
         $classInfo = null;
         $students = [];

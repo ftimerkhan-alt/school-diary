@@ -61,13 +61,21 @@ class User {
             $where[] = 'u.is_active = :is_active';
             $params[':is_active'] = $filters['is_active'];
         }
+
+        if (!empty($filters['class_id'])) {
+    $where[] = 'st.class_id = :class_id';
+    $params[':class_id'] = (int)$filters['class_id'];
+}
         
         $whereStr = implode(' AND ', $where);
         
         $stmt = $this->db->prepare("
-            SELECT u.*, r.name as role_name, r.display_name as role_display_name
-            FROM users u
-            JOIN roles r ON u.role_id = r.id
+            SELECT u.*, r.name as role_name, r.display_name as role_display_name,
+       c.name as class_name
+FROM users u
+JOIN roles r ON u.role_id = r.id
+LEFT JOIN students st ON st.user_id = u.id
+LEFT JOIN classes c ON c.id = st.class_id
             WHERE {$whereStr}
             ORDER BY r.id ASC, u.full_name ASC
             LIMIT :limit OFFSET :offset
@@ -100,12 +108,19 @@ class User {
             $params[':search'] = '%' . $filters['search'] . '%';
             $params[':search2'] = '%' . $filters['search'] . '%';
         }
+
+        if (!empty($filters['class_id'])) {
+    $where[] = 'st.class_id = :class_id';
+    $params[':class_id'] = (int)$filters['class_id'];
+}
         
         $whereStr = implode(' AND ', $where);
         
         $stmt = $this->db->prepare("
             SELECT COUNT(*) as cnt FROM users u
-            JOIN roles r ON u.role_id = r.id
+JOIN roles r ON u.role_id = r.id
+LEFT JOIN students st ON st.user_id = u.id
+LEFT JOIN classes c ON c.id = st.class_id
             WHERE {$whereStr}
         ");
         $stmt->execute($params);

@@ -9,9 +9,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         .login-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
+    background: linear-gradient(135deg, #0F2D5C 0%, #1D4ED8 100%);
+    min-height: 100vh;
+}
         .glass-card {
             background: rgba(255,255,255,0.95);
             backdrop-filter: blur(20px);
@@ -130,7 +130,7 @@
                     </div>
                     
                     <button type="submit" 
-                            class="w-full py-3 px-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg">
+                            class="w-full py-3 px-6 bg-blue-700 text-white font-semibold rounded-xl hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-200 transition-all transform hover:scale-[1.01] active:scale-[0.99] shadow-lg"
                         <i class="fas fa-sign-in-alt mr-2"></i> Войти
                     </button>
                 </form>

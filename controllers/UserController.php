@@ -34,9 +34,10 @@ class UserController {
         $pageTitle = 'Управление пользователями';
         
         $filters = [
-            'role' => get('role', ''),
-            'search' => get('search', ''),
-        ];
+    'role' => get('role', ''),
+    'search' => get('search', ''),
+    'class_id' => (int)get('class_id', 0),
+];
         
         $page = max(1, (int)get('page', 1));
         $perPage = 20;
@@ -45,6 +46,7 @@ class UserController {
         $pagination = paginate($totalUsers, $perPage, $page);
         $users = $this->userModel->getAll($filters, $perPage, $pagination['offset']);
         $roles = $this->userModel->getRoles();
+        $classes = $this->classModel->getAll(currentAcademicYear());
         
         require __DIR__ . '/../views/layout/header.php';
         require __DIR__ . '/../views/users/index.php';

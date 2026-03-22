@@ -2,21 +2,24 @@
 <div class="space-y-6">
     
     <!-- Выбор класса -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <form method="GET" action="<?= url('reports/progress') ?>" class="flex flex-col sm:flex-row gap-3">
-            <input type="hidden" name="route" value="reports/progress">
-            <div class="flex-1">
-                <select name="class_id" onchange="this.form.submit()"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
-                    <?php foreach ($classes as $c): ?>
-                    <option value="<?= $c['id'] ?>" <?= $selectedClassId == $c['id'] ? 'selected' : '' ?>>
-                        Класс <?= e($c['name']) ?> (<?= $c['student_count'] ?> уч.)
-                    </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-        </form>
-    </div>
+    <?php if (!isClassTeacher()): ?>
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+    <form method="GET" action="<?= url('reports/progress') ?>" class="flex flex-col sm:flex-row gap-3">
+        <input type="hidden" name="route" value="reports/progress">
+        <div class="flex-1">
+            <select name="class_id" onchange="this.form.submit()"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                <option value="">Выберите класс</option>
+                <?php foreach ($classes as $c): ?>
+                <option value="<?= $c['id'] ?>" <?= $selectedClassId == $c['id'] ? 'selected' : '' ?>>
+                    Класс <?= e($c['name']) ?> (<?= $c['student_count'] ?> уч.)
+                </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+    </form>
+</div>
+<?php endif; ?>
     
     <?php if ($classInfo && !empty($students)): ?>
     

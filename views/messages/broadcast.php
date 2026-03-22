@@ -37,6 +37,27 @@
                 </select>
             </div>
 
+            <div id="studentsModeBlock" class="hidden">
+    <label class="block text-sm font-semibold text-gray-700 mb-1">Кому из учеников</label>
+    <select name="students_mode" id="studentsModeSelect"
+            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
+            onchange="onStudentsModeChange()">
+        <option value="all">Всем ученикам школы</option>
+        <option value="class">Ученикам определённого класса</option>
+    </select>
+</div>
+
+<div id="studentsClassBlock" class="hidden">
+    <label class="block text-sm font-semibold text-gray-700 mb-1">Выберите класс</label>
+    <select name="students_class_id"
+            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+        <option value="0">— Выберите класс —</option>
+        <?php foreach ($classes as $c): ?>
+            <option value="<?= (int)$c['id'] ?>"><?= e($c['name']) ?></option>
+        <?php endforeach; ?>
+    </select>
+</div>
+
             <?php if (in_array(currentRole(), ['admin','director','head_teacher'])): ?>
             <div id="classBlock" class="hidden">
                 <label class="block text-sm font-semibold text-gray-700 mb-1">Класс</label>
@@ -80,8 +101,36 @@
 function onTargetChange() {
     const t = document.getElementById('targetSelect');
     const classBlock = document.getElementById('classBlock');
-    if (!classBlock) return;
-    classBlock.classList.toggle('hidden', t.value !== 'class');
+    const studentsModeBlock = document.getElementById('studentsModeBlock');
+    const studentsClassBlock = document.getElementById('studentsClassBlock');
+
+    // Старый блок для target=class
+    if (classBlock) {
+        classBlock.classList.toggle('hidden', t.value !== 'class');
+    }
+
+    // Новый блок для target=students
+    if (studentsModeBlock) {
+        studentsModeBlock.classList.toggle('hidden', t.value !== 'students');
+    }
+
+    // Если не students — прячем блок класса учеников
+    if (studentsClassBlock && t.value !== 'students') {
+        studentsClassBlock.classList.add('hidden');
+    }
+
+    if (t.value === 'students') {
+        onStudentsModeChange();
+    }
 }
+
+function onStudentsModeChange() {
+    const mode = document.getElementById('studentsModeSelect');
+    const studentsClassBlock = document.getElementById('studentsClassBlock');
+    if (!mode || !studentsClassBlock) return;
+
+    studentsClassBlock.classList.toggle('hidden', mode.value !== 'class');
+}
+
 onTargetChange();
 </script>

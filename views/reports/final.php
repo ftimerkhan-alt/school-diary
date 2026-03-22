@@ -1,29 +1,32 @@
 <!-- Итоговая ведомость -->
 <div class="space-y-6">
     
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <form method="GET" action="<?= url('reports/final') ?>" class="flex flex-col sm:flex-row gap-3 items-end">
-            <input type="hidden" name="route" value="reports/final">
-            <div class="flex-1">
-                <label class="block text-xs font-semibold text-gray-500 mb-1">Класс</label>
-                <select name="class_id" onchange="this.form.submit()"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
-                    <?php foreach ($classes as $c): ?>
-                    <option value="<?= $c['id'] ?>" <?= $selectedClassId == $c['id'] ? 'selected' : '' ?>>
-                        Класс <?= e($c['name']) ?>
-                    </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <button type="button" onclick="printTable()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition text-sm font-medium">
-                <i class="fas fa-print mr-1"></i> Печать
-            </button>
-        </form>
-    </div>
+<?php if (!isClassTeacher()): ?>
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+    <form method="GET" action="<?= url('reports/final') ?>" class="flex flex-col sm:flex-row gap-3 items-end">
+        <input type="hidden" name="route" value="reports/final">
+        <div class="flex-1">
+            <select name="class_id" onchange="this.form.submit()"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                <option value="">Выберите класс</option>
+                <?php foreach ($classes as $c): ?>
+                <option value="<?= $c['id'] ?>" <?= $selectedClassId == $c['id'] ? 'selected' : '' ?>>
+                    Класс <?= e($c['name']) ?>
+                </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <button type="button" onclick="printTable()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition text-sm font-medium">
+            <i class="fas fa-print mr-1"></i> Печать
+        </button>
+    </form>
+</div>
+<?php endif; ?>
     
     <?php if ($classInfo && !empty($students) && !empty($subjects)): ?>
     
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" id="printArea">
+        
         <div class="p-4 border-b border-gray-100 text-center">
             <h2 class="text-lg font-bold text-gray-800">
                 Итоговая ведомость — Класс <?= e($classInfo['name']) ?>
@@ -80,6 +83,13 @@
             </table>
         </div>
     </div>
+    <div class="flex justify-end mt-4">
+    <button type="button"
+            onclick="printTable()"
+            class="px-5 py-2.5 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition text-sm font-medium shadow-sm">
+        <i class="fas fa-print mr-2"></i> Печать 
+    </button>
+</div>
     
     <?php else: ?>
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">

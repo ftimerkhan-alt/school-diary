@@ -23,8 +23,18 @@
                 </option>
                 <?php endforeach; ?>
             </select>
+
+            <select name="class_id" id="classFilter"
+        class="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition bg-white <?= $filters['role'] === 'student' ? '' : 'hidden' ?>">
+    <option value="">Все классы</option>
+    <?php foreach ($classes as $c): ?>
+    <option value="<?= $c['id'] ?>" <?= $filters['class_id'] == $c['id'] ? 'selected' : '' ?>>
+        <?= e($c['name']) ?>
+    </option>
+    <?php endforeach; ?>
+</select>
             
-            <button type="submit" class="px-6 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium">
+            <button type="submit" class="px-6 py-2.5 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition font-medium">
                 <i class="fas fa-filter mr-1"></i> Фильтр
             </button>
             
@@ -45,6 +55,7 @@
                         <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Пользователь</th>
                         <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Логин</th>
                         <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Роль</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Класс</th>
                         <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Email</th>
                         <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Статус</th>
                         <?php if (isAdmin()): ?>
@@ -94,6 +105,9 @@
                                 <?= e($u['role_display_name']) ?>
                             </span>
                         </td>
+                        <td class="px-4 py-3 hidden md:table-cell text-sm text-gray-500">
+    <?= ($u['role_name'] === 'student' && !empty($u['class_name'])) ? e($u['class_name']) : '—' ?>
+</td>
                         <td class="px-4 py-3 hidden md:table-cell text-sm text-gray-500"><?= e($u['email'] ?? '—') ?></td>
                         <td class="px-4 py-3 hidden lg:table-cell">
                             <?php if ($u['is_active']): ?>
@@ -151,18 +165,21 @@
                     Показано <?= count($users) ?> из <?= $pagination['total'] ?> 
                     <?= plural($pagination['total'], 'пользователь', 'пользователя', 'пользователей') ?>
                 </p>
-                <?= renderPagination($pagination, url('users') . '?role=' . e($filters['role']) . '&search=' . e($filters['search'])) ?>
+                <?= renderPagination(
+    $pagination,
+    url('users') . '?role=' . urlencode($filters['role']) . '&search=' . urlencode($filters['search']) . '&class_id=' . (int)$filters['class_id']
+) ?>
             </div>
         </div>
     </div>
-        <!-- Управление классами (для админа) -->
+     <!--   Управление классами (для админа) 
     <?php if (isAdmin()): ?>
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h3 class="text-lg font-bold text-gray-800 mb-4">
             <i class="fas fa-school text-indigo-500 mr-2"></i>Управление классами
         </h3>
         
-        <!-- Добавление класса -->
+         Добавление класса 
         <form method="POST" action="<?= url('users/add-class') ?>" class="flex flex-col sm:flex-row gap-3 mb-4">
             <?= csrfField() ?>
             <input type="text" name="class_name" placeholder="Например: 11Б" required
@@ -174,7 +191,7 @@
             </button>
         </form>
         
-        <!-- Список классов -->
+         Список классов
         <?php 
         $classModel = new ClassModel();
         $allClasses = $classModel->getAll();
@@ -193,5 +210,27 @@
         <p class="text-gray-400 text-sm">Классов пока нет</p>
         <?php endif; ?>
     </div>
-    <?php endif; ?>
+    <?php endif; ?> -->
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const roleSelect = document.querySelector('select[name="role"]');
+    const classFilter = document.getElementById('classFilter');
+
+    function toggleClassFilter() {
+        if (!roleSelect || !classFilter) return;
+        if (roleSelect.value === 'student') {
+            classFilter.classList.remove('hidden');
+        } else {
+            classFilter.classList.add('hidden');
+            classFilter.value = '';
+        }
+    }
+
+    if (roleSelect) {
+        roleSelect.addEventListener('change', toggleClassFilter);
+        toggleClassFilter();
+    }
+});
+</script>

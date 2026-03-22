@@ -3,7 +3,7 @@
     
     <?php if ($class): ?>
     <!-- Информация о классе -->
-    <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
+    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl p-6 text-white shadow-lg">
         <div class="flex items-center gap-4">
             <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
                 <span class="text-2xl font-bold"><?= e($class['name']) ?></span>

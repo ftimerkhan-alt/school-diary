@@ -221,13 +221,15 @@ class MessagesController {
         $classId = (int)post('class_id', 0);
         $subject = trim(post('subject', ''));
         $message = trim(post('message', ''));
+        $studentsMode = post('students_mode', 'all');
+$studentsClassId = (int)post('students_class_id', 0);
 
         if ($subject === '' || $message === '') {
             setFlash('error', 'Заполните тему и текст рассылки');
             redirect('messages/broadcast');
         }
 
-        $recipients = $this->resolveBroadcastRecipients($role, $target, $classId);
+        $recipients = $this->resolveBroadcastRecipients($role, $target, $classId, $studentsMode, $studentsClassId);
 
         if (empty($recipients)) {
             setFlash('error', 'Не удалось определить получателей для рассылки');
@@ -259,7 +261,7 @@ class MessagesController {
      * Определение получателей рассылки
      * @return int[] user_id
      */
-    private function resolveBroadcastRecipients($senderRole, $target, $classId) {
+    private function resolveBroadcastRecipients($senderRole, $target, $classId, $studentsMode = 'all', $studentsClassId = 0) {
         $db = getDB();
         $uids = [];
 
@@ -285,15 +287,29 @@ class MessagesController {
                     break;
 
                 case 'students':
-                    $stmt = $db->prepare("
-                        SELECT u.id
-                        FROM users u
-                        JOIN roles r ON u.role_id = r.id
-                        WHERE u.is_active = 1 AND r.name = 'student'
-                    ");
-                    $stmt->execute();
-                    $uids = $stmt->fetchAll(PDO::FETCH_COLUMN);
-                    break;
+    if ($studentsMode === 'class' && $studentsClassId > 0) {
+        $stmt = $db->prepare("
+            SELECT u.id
+            FROM students s
+            JOIN users u ON s.user_id = u.id
+            JOIN roles r ON u.role_id = r.id
+            WHERE u.is_active = 1
+              AND r.name = 'student'
+              AND s.class_id = :cid
+        ");
+        $stmt->execute([':cid' => $studentsClassId]);
+        $uids = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    } else {
+        $stmt = $db->prepare("
+            SELECT u.id
+            FROM users u
+            JOIN roles r ON u.role_id = r.id
+            WHERE u.is_active = 1 AND r.name = 'student'
+        ");
+        $stmt->execute();
+        $uids = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    }
+    break;
 
                 case 'parents':
                     $stmt = $db->prepare("

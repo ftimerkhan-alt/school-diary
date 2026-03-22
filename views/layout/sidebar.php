@@ -27,8 +27,8 @@ function isActive($route) {
 
 function activeClass($route) {
     return isActive($route)
-        ? 'bg-indigo-700/80 text-white shadow-md'
-        : 'text-indigo-100 hover:bg-indigo-700/50 hover:text-white';
+        ? 'bg-white/10 text-white shadow-md'
+        : 'text-blue-100 hover:bg-white/10 hover:text-white';
 }
 
 // Формируем меню в зависимости от роли
@@ -105,7 +105,7 @@ switch ($role) {
 ?>
 
 <!-- Sidebar -->
-<aside id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-gradient-to-b from-indigo-800 to-indigo-900 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out z-50 flex flex-col shadow-xl">
+<aside id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-gradient-to-b from-slate-900 via-blue-900 to-blue-800 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out z-50 flex flex-col shadow-xl">
     
     <!-- Логотип -->
     <div class="flex items-center gap-3 px-6 py-5 border-b border-indigo-700/50">

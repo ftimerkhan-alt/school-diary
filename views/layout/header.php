@@ -27,7 +27,30 @@ if ($currentUser) {
             theme: {
                 extend: {
                     colors: {
-                        primary: { 50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81' },
+                        primary: {
+  50:'#eff6ff',
+  100:'#dbeafe',
+  200:'#bfdbfe',
+  300:'#93c5fd',
+  400:'#60a5fa',
+  500:'#3b82f6',
+  600:'#2563eb',
+  700:'#1d4ed8',
+  800:'#1e40af',
+  900:'#0b1f5b'
+},
+accent: {
+  50:'#f0fdfa',
+  100:'#ccfbf1',
+  200:'#99f6e4',
+  300:'#5eead4',
+  400:'#2dd4bf',
+  500:'#14b8a6',
+  600:'#0d9488',
+  700:'#0f766e',
+  800:'#115e59',
+  900:'#134e4a'
+}
                     }
                 }
             }
@@ -76,7 +99,7 @@ if ($currentUser) {
                     <!-- Профиль -->
                     <div class="relative" id="profileDropdown">
                         <button onclick="toggleProfileMenu()" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition">
-                            <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                            <div class="w-8 h-8 bg-gradient-to-br from-blue-700 to-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
                                 <?= mb_strtoupper(mb_substr($currentUser['full_name'], 0, 1)) ?>
                             </div>
                             <div class="hidden md:block text-left">

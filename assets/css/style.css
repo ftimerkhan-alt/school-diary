@@ -3,6 +3,61 @@
    ===================================================== */
 
 /* ---- Базовые сбросы и переопределения ---- */
+.btn-school {
+    background: var(--school-primary-700);
+    color: #fff;
+    border: 1px solid var(--school-primary-700);
+    transition: all 0.2s ease;
+}
+
+.btn-school:hover {
+    background: var(--school-primary-800);
+    border-color: var(--school-primary-800);
+}
+
+.btn-school-light {
+    background: var(--school-primary-50);
+    color: var(--school-primary-800);
+    border: 1px solid var(--school-primary-100);
+    transition: all 0.2s ease;
+}
+
+.btn-school-light:hover {
+    background: var(--school-primary-100);
+}
+
+.btn-school-outline {
+    background: #fff;
+    color: var(--school-primary-700);
+    border: 1px solid var(--school-primary-200, #BFDBFE);
+    transition: all 0.2s ease;
+}
+
+.btn-school-outline:hover {
+    background: var(--school-primary-50);
+}
+
+:root {
+    --school-bg: #F4F7FB;
+    --school-card: #FFFFFF;
+    --school-border: #DCE3ED;
+
+    --school-primary-900: #0F2D5C;
+    --school-primary-800: #163B79;
+    --school-primary-700: #1E40AF;
+    --school-primary-600: #1D4ED8;
+    --school-primary-500: #2563EB;
+    --school-primary-100: #DBEAFE;
+    --school-primary-50: #EFF6FF;
+
+    --school-text: #0F172A;
+    --school-muted: #475569;
+
+    --school-success: #16A34A;
+    --school-warning: #D97706;
+    --school-danger: #DC2626;
+}
+
 * {
     scrollbar-width: thin;
     scrollbar-color: #c7d2fe #f1f5f9;
@@ -469,6 +524,11 @@
         border-color: #374151 !important;
     }
     */
+}
+
+body {
+    background: var(--school-bg);
+    color: var(--school-text);
 }
 
 /* ---- Переходы страниц ---- */
