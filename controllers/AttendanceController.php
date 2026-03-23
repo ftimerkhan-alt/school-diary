@@ -37,14 +37,14 @@ class AttendanceController {
         $availableSubjects = [];
         $availableClasses = [];
         
-        if (in_array($role, ['teacher', 'class_teacher'])) {
+        if (in_array($role, ['teacher', 'class_teacher', 'head_teacher'])) {
             $teacher = $this->teacherModel->findByUserId(currentUserId());
             if ($teacher) {
                 $teacherId = $teacher['id'];
                 $availableSubjects = $this->teacherModel->getSubjects($teacherId);
                 $availableClasses = $this->teacherModel->getClasses($teacherId);
             }
-        } elseif (in_array($role, ['admin', 'head_teacher'])) {
+        } elseif (in_array($role, ['admin'])) {
             $availableSubjects = $this->subjectModel->getAll();
             $availableClasses = $this->classModel->getAll(currentAcademicYear());
         }

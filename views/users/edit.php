@@ -89,23 +89,44 @@ $userIsActive = isset($user['is_active']) ? (int)$user['is_active'] : 1;
             </div>
 
             <!-- Блок для классного руководителя -->
-<div id="classTeacherFields" class="<?= $userRoleName === 'class_teacher' ? '' : 'hidden' ?> bg-indigo-50 rounded-lg p-4 border border-indigo-200">
+<div id="classTeacherFields" class="<?= in_array($userRoleName, ['class_teacher', 'head_teacher']) ? '' : 'hidden' ?> bg-indigo-50 rounded-lg p-4 border border-indigo-200">
     <h4 class="font-semibold text-indigo-800 mb-3">
         <i class="fas fa-chalkboard-teacher mr-1"></i> Классное руководство
     </h4>
 
     <label class="block text-sm font-semibold text-gray-700 mb-1">Закреплённый класс</label>
     <select name="class_teacher_class_id"
-            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition bg-white">
-        <option value="0">— Не назначать класс —</option>
-        <?php foreach ($classes as $c): ?>
-        <option value="<?= (int)$c['id'] ?>"
-            <?= (!empty($currentClassTeacherClassId) && (int)$currentClassTeacherClassId === (int)$c['id']) ? 'selected' : '' ?>>
-            <?= e($c['name']) ?>
-            <?= !empty($c['teacher_name']) ? ' (сейчас: ' . e($c['teacher_name']) . ')' : '' ?>
-        </option>
-        <?php endforeach; ?>
-    </select>
+        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition bg-white">
+    <option value="0" <?= ((int)$currentClassTeacherClassId === 0) ? 'selected' : '' ?>>
+        — Не назначать класс —
+    </option>
+
+    <?php foreach ($classes as $c): ?>
+    <?php
+        $isCurrent = ((int)$currentClassTeacherClassId === (int)$c['id']);
+        $isTakenByOther = !empty($c['teacher_name']) && !$isCurrent;
+    ?>
+    <option value="<?= (int)$c['id'] ?>" <?= $isCurrent ? 'selected' : '' ?>>
+        <?= e($c['name']) ?>
+        <?php if ($isCurrent): ?>
+            (закреплён за этим руководителем)
+        <?php elseif ($isTakenByOther): ?>
+            (сейчас: <?= e($c['teacher_name']) ?>)
+        <?php endif; ?>
+    </option>
+    <?php endforeach; ?>
+</select>
+
+<?php if (!empty($currentClassTeacherClassName)): ?>
+<p class="text-sm text-gray-600 mb-3">
+    Сейчас закреплённый класс:
+    <span class="font-semibold text-blue-700"><?= e($currentClassTeacherClassName) ?></span>
+</p>
+<?php else: ?>
+<p class="text-sm text-gray-500 mb-3">
+    Сейчас класс не закреплён
+</p>
+<?php endif; ?>
 
     <p class="text-xs text-gray-500 mt-2">
         Если класс уже закреплён за другим учителем, система не позволит назначить его повторно.
@@ -194,7 +215,10 @@ function onRoleChange() {
     
     document.getElementById('studentFields').classList.toggle('hidden', roleName !== 'student');
     document.getElementById('parentFields').classList.toggle('hidden', roleName !== 'parent');
-    document.getElementById('classTeacherFields').classList.toggle('hidden', roleName !== 'class_teacher');
+    document.getElementById('classTeacherFields').classList.toggle(
+    'hidden',
+    !(roleName === 'class_teacher' || roleName === 'head_teacher')
+);
 }
 
 function addChildRow() {

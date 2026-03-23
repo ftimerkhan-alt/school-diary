@@ -73,7 +73,7 @@ function isClassTeacher() {
  * Проверяет, является ли пользователь учителем (любого типа)
  */
 function isTeacher() {
-    return in_array(currentRole(), ['teacher', 'class_teacher']);
+    return in_array(currentRole(), ['teacher', 'class_teacher', 'head_teacher']);
 }
 
 /**
@@ -115,14 +115,14 @@ function canManageSchedule() {
  * Проверяет, может ли пользователь выставлять оценки
  */
 function canManageGrades() {
-    return in_array(currentRole(), ['admin', 'teacher', 'class_teacher']);
+    return in_array(currentRole(), ['admin', 'teacher', 'class_teacher', 'head_teacher']);
 }
 
 /**
  * Проверяет, может ли пользователь отмечать посещаемость
  */
 function canManageAttendance() {
-    return in_array(currentRole(), ['admin', 'teacher', 'class_teacher']);
+    return in_array(currentRole(), ['admin', 'teacher', 'class_teacher', 'head_teacher']);
 }
 
 /**
@@ -182,15 +182,18 @@ function getParentChildrenIds() {
  * Получает class_id класса, которым руководит текущий пользователь
  */
 function getClassTeacherClassId() {
-    if (!isClassTeacher()) return null;
+    if (!isLoggedIn()) return null;
+
     $db = getDB();
     $stmt = $db->prepare("
-        SELECT c.id FROM classes c
+        SELECT c.id
+        FROM classes c
         JOIN teachers t ON c.class_teacher_id = t.id
         WHERE t.user_id = :user_id
         LIMIT 1
     ");
     $stmt->execute([':user_id' => currentUserId()]);
     $class = $stmt->fetch();
-    return $class ? $class['id'] : null;
+
+    return $class ? (int)$class['id'] : null;
 }

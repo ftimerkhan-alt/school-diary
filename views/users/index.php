@@ -106,7 +106,16 @@
                             </span>
                         </td>
                         <td class="px-4 py-3 hidden md:table-cell text-sm text-gray-500">
-    <?= ($u['role_name'] === 'student' && !empty($u['class_name'])) ? e($u['class_name']) : '—' ?>
+    <?php
+    $classLabel = '—';
+
+    if ($u['role_name'] === 'student' && !empty($u['student_class_name'])) {
+        $classLabel = $u['student_class_name'];
+    } elseif (in_array($u['role_name'], ['class_teacher', 'head_teacher']) && !empty($u['class_teacher_class_name'])) {
+        $classLabel = $u['class_teacher_class_name'];
+    }
+    ?>
+    <?= e($classLabel) ?>
 </td>
                         <td class="px-4 py-3 hidden md:table-cell text-sm text-gray-500"><?= e($u['email'] ?? '—') ?></td>
                         <td class="px-4 py-3 hidden lg:table-cell">
@@ -123,7 +132,7 @@
                         <?php if (isAdmin()): ?>
                         <td class="px-4 py-3 text-right">
                             <div class="flex items-center justify-end gap-1">
-                                <?php if (in_array($u['role_name'], ['teacher', 'class_teacher'])): 
+                                <?php if (in_array($u['role_name'], ['teacher', 'class_teacher', 'head_teacher'])):
                                     // Находим teacher_id
                                     $tModel = new Teacher();
                                     $tData = $tModel->findByUserId($u['id']);

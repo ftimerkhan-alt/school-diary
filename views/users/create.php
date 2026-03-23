@@ -135,7 +135,10 @@ function onRoleChange() {
     const roleName = option.getAttribute('data-name') || '';
     
     document.getElementById('studentFields').classList.toggle('hidden', roleName !== 'student');
-    document.getElementById('classTeacherFields').classList.toggle('hidden', roleName !== 'class_teacher');
+    document.getElementById('classTeacherFields').classList.toggle(
+    'hidden',
+    !(roleName === 'class_teacher' || roleName === 'head_teacher')
+);
     document.getElementById('parentFields').classList.toggle('hidden', roleName !== 'parent');
 }
 

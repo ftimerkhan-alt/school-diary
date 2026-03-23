@@ -61,15 +61,16 @@ switch ($role) {
         break;
     
     case 'head_teacher':
-        $menuItems[] = ['url' => 'users', 'icon' => 'fa-users', 'label' => 'Пользователи'];
-        $menuItems[] = ['url' => 'grades/journal', 'icon' => 'fa-book-open', 'label' => 'Журнал оценок'];
-        $menuItems[] = ['url' => 'attendance/mark', 'icon' => 'fa-clipboard-check', 'label' => 'Посещаемость'];
-        $menuItems[] = ['url' => 'schedule/view', 'icon' => 'fa-calendar-alt', 'label' => 'Расписание'];
-        $menuItems[] = ['url' => 'schedule/edit', 'icon' => 'fa-calendar-plus', 'label' => 'Редактор расписания'];
-        $menuItems[] = ['url' => 'reports', 'icon' => 'fa-chart-bar', 'label' => 'Отчёты'];
-        $menuItems[] = ['url' => 'messages/inbox', 'icon' => 'fa-envelope', 'label' => 'Сообщения'];
-        $menuItems[] = ['url' => 'messages/broadcast', 'icon' => 'fa-bullhorn', 'label' => 'Рассылка'];
-        break;
+    $menuItems[] = ['url' => 'users', 'icon' => 'fa-users', 'label' => 'Пользователи'];
+    $menuItems[] = ['url' => 'grades/journal', 'icon' => 'fa-book-open', 'label' => 'Журнал оценок'];
+    $menuItems[] = ['url' => 'attendance/mark', 'icon' => 'fa-clipboard-check', 'label' => 'Посещаемость'];
+    $menuItems[] = ['url' => 'schedule/my-schedule', 'icon' => 'fa-calendar-day', 'label' => 'Моё расписание'];
+    $menuItems[] = ['url' => 'schedule/view', 'icon' => 'fa-calendar-alt', 'label' => 'Расписание классов'];
+    $menuItems[] = ['url' => 'schedule/edit', 'icon' => 'fa-calendar-plus', 'label' => 'Редактор расписания'];
+    $menuItems[] = ['url' => 'reports', 'icon' => 'fa-chart-bar', 'label' => 'Отчёты'];
+    $menuItems[] = ['url' => 'messages/inbox', 'icon' => 'fa-envelope', 'label' => 'Сообщения'];
+    $menuItems[] = ['url' => 'messages/broadcast', 'icon' => 'fa-bullhorn', 'label' => 'Рассылка'];
+    break;
     
     case 'class_teacher':
         $menuItems[] = ['url' => 'grades/journal', 'icon' => 'fa-book-open', 'label' => 'Журнал оценок'];

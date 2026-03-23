@@ -120,18 +120,19 @@ class UserController {
             }
             
             // Дополнительные действия в зависимости от роли
-            if (in_array($roleName, ['teacher', 'class_teacher'])) {
-                $isClassTeacher = ($roleName === 'class_teacher') ? 1 : 0;
-                $teacherId = $this->teacherModel->create($userId, $isClassTeacher);
-                
-                // Назначение классного руководства
-                if ($isClassTeacher) {
-                    $classId = (int)post('class_teacher_class_id');
-                    if ($classId) {
-                        $this->classModel->update($classId, ['class_teacher_id' => $teacherId]);
-                    }
-                }
-            }
+            if (in_array($roleName, ['teacher', 'class_teacher', 'head_teacher'])) {
+    $isClassTeacher = ($roleName === 'class_teacher') ? 1 : 0;
+    $teacherId = $this->teacherModel->create($userId, $isClassTeacher);
+
+    // Если выбрали класс для классного руководства — назначаем
+    $classId = (int)post('class_teacher_class_id', 0);
+    if ($classId > 0) {
+        $db->prepare("UPDATE teachers SET is_class_teacher = 1 WHERE id = :tid")
+           ->execute([':tid' => $teacherId]);
+
+        $this->classModel->update($classId, ['class_teacher_id' => $teacherId]);
+    }
+}
             
             if ($roleName === 'student') {
                 $classId = (int)post('student_class_id');
@@ -188,19 +189,28 @@ class UserController {
         $teacher = null;
         $student = null;
         $parentChildren = [];
-        $currentClassTeacherClassId = null;
+        $currentClassTeacherClassId = 0;
+$currentClassTeacherClassName = '';
 
-        if ($teacher) {
-            $db = getDB();
-            $stmt = $db->prepare("SELECT id FROM classes WHERE class_teacher_id = :tid LIMIT 1");
-            $stmt->execute([':tid' => $teacher['id']]);
-            $row = $stmt->fetch();
-            $currentClassTeacherClassId = $row ? (int)$row['id'] : null;
-        }
+$db = getDB();
+$stmt = $db->prepare("
+    SELECT c.id, c.name
+    FROM classes c
+    JOIN teachers t ON c.class_teacher_id = t.id
+    WHERE t.user_id = :uid
+    LIMIT 1
+");
+$stmt->execute([':uid' => (int)$user['id']]);
+$row = $stmt->fetch();
+
+if ($row) {
+    $currentClassTeacherClassId = (int)$row['id'];
+    $currentClassTeacherClassName = $row['name'];
+}
         
-        if (in_array($user['role_name'], ['teacher', 'class_teacher'])) {
-            $teacher = $this->teacherModel->findByUserId($user['id']);
-        }
+        if (in_array($user['role_name'], ['teacher', 'class_teacher', 'head_teacher'])) {
+    $teacher = $this->teacherModel->findByUserId($user['id']);
+}
         
         if ($user['role_name'] === 'student') {
             $student = $this->studentModel->findByUserId($user['id']);
@@ -280,7 +290,7 @@ class UserController {
             }
 
             // ===== Обработка назначения класса классному руководителю =====
-if ($newRoleName === 'class_teacher') {
+if (in_array($newRoleName, ['class_teacher', 'head_teacher'])) {
 
     // 1) гарантируем, что есть запись в teachers
     $teacher = $this->teacherModel->findByUserId($id);

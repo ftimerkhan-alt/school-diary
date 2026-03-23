@@ -39,14 +39,14 @@ class GradeController {
         $availableClasses = [];
         
         // Определяем доступные предметы и классы
-        if (in_array($role, ['teacher', 'class_teacher'])) {
+        if (in_array($role, ['teacher', 'class_teacher', 'head_teacher'])) {
             $teacher = $this->teacherModel->findByUserId(currentUserId());
             if ($teacher) {
                 $teacherId = $teacher['id'];
                 $availableSubjects = $this->teacherModel->getSubjects($teacherId);
                 $availableClasses = $this->teacherModel->getClasses($teacherId);
             }
-        } elseif (in_array($role, ['admin', 'director', 'head_teacher'])) {
+        } elseif (in_array($role, ['admin', 'director'])) {
             $availableSubjects = $this->subjectModel->getAll();
             $availableClasses = $this->classModel->getAll(currentAcademicYear());
         }

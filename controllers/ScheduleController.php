@@ -94,7 +94,7 @@ class ScheduleController {
         $schedule = [];
         $title = '';
         
-        if (in_array($role, ['teacher', 'class_teacher'])) {
+        if (in_array($role, ['teacher', 'class_teacher', 'head_teacher'])) {
             $teacher = $this->teacherModel->findByUserId(currentUserId());
             if ($teacher) {
                 $schedule = $this->scheduleModel->getByTeacherStructured($teacher['id']);

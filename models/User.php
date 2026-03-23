@@ -70,12 +70,17 @@ class User {
         $whereStr = implode(' AND ', $where);
         
         $stmt = $this->db->prepare("
-            SELECT u.*, r.name as role_name, r.display_name as role_display_name,
-       c.name as class_name
+            SELECT u.*, 
+       r.name as role_name, 
+       r.display_name as role_display_name,
+       sc.name as student_class_name,
+       ctc.name as class_teacher_class_name
 FROM users u
 JOIN roles r ON u.role_id = r.id
 LEFT JOIN students st ON st.user_id = u.id
-LEFT JOIN classes c ON c.id = st.class_id
+LEFT JOIN classes sc ON sc.id = st.class_id
+LEFT JOIN teachers t ON t.user_id = u.id
+LEFT JOIN classes ctc ON ctc.class_teacher_id = t.id
             WHERE {$whereStr}
             ORDER BY r.id ASC, u.full_name ASC
             LIMIT :limit OFFSET :offset
@@ -117,10 +122,13 @@ LEFT JOIN classes c ON c.id = st.class_id
         $whereStr = implode(' AND ', $where);
         
         $stmt = $this->db->prepare("
-            SELECT COUNT(*) as cnt FROM users u
+            SELECT COUNT(*) as cnt 
+FROM users u
 JOIN roles r ON u.role_id = r.id
 LEFT JOIN students st ON st.user_id = u.id
-LEFT JOIN classes c ON c.id = st.class_id
+LEFT JOIN classes sc ON sc.id = st.class_id
+LEFT JOIN teachers t ON t.user_id = u.id
+LEFT JOIN classes ctc ON ctc.class_teacher_id = t.id
             WHERE {$whereStr}
         ");
         $stmt->execute($params);

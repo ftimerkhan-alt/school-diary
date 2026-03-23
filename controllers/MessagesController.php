@@ -182,21 +182,20 @@ class MessagesController {
 
         // Роли для выбора аудитории
         $roleTargets = [
-            'all' => 'Всем пользователям',
-            'teachers' => 'Только учителям и классным руководителям',
-            'students' => 'Только ученикам',
-            'parents' => 'Только родителям',
-            'class_teachers' => 'Только классным руководителям',
-        ];
+    'all' => 'Всем пользователям',
+    'teachers' => 'Только учителям и классным руководителям',
+    'students' => 'Только ученикам',
+    'parents' => 'Только родителям',
+    'class_teachers' => 'Только классным руководителям',
+];
 
-        // Для классного руководителя — только его варианты
-        if ($role === 'class_teacher') {
-            $roleTargets = [
-                'my_class_students' => 'Ученикам моего класса',
-                'my_class_parents'  => 'Родителям моего класса',
-                'my_class_all'      => 'Ученикам и родителям моего класса',
-            ];
-        }
+// Если пользователь реально закреплён за классом как классный руководитель
+$myClassId = getClassTeacherClassId();
+if ($myClassId) {
+    $roleTargets['my_class_students'] = 'Ученикам моего класса';
+    $roleTargets['my_class_parents']  = 'Родителям моего класса';
+    $roleTargets['my_class_all']      = 'Ученикам и родителям моего класса';
+}
 
         require __DIR__ . '/../views/layout/header.php';
         require __DIR__ . '/../views/messages/broadcast.php';
@@ -366,9 +365,8 @@ $studentsClassId = (int)post('students_class_id', 0);
             return $uids;
         }
 
-        // class_teacher
-        if ($senderRole === 'class_teacher') {
-            $myClassId = getClassTeacherClassId();
+        $myClassId = getClassTeacherClassId();
+if ($myClassId && in_array($target, ['my_class_students', 'my_class_parents', 'my_class_all'])) {
             if (!$myClassId) return [];
 
             // Ученики
