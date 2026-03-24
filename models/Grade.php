@@ -230,44 +230,69 @@ class GradeModel {
     /**
      * Средние баллы по всем предметам для класса
      */
-    public function classAveragesBySubjects($classId) {
-        $stmt = $this->db->prepare("
-            SELECT s.id, s.name, ROUND(AVG(g.grade), 2) as avg_grade,
-                   COUNT(g.id) as grade_count
-            FROM grades g
-            JOIN subjects s ON g.subject_id = s.id
-            JOIN students st ON g.student_id = st.id
-            WHERE st.class_id = :class_id
-            GROUP BY s.id, s.name
-            ORDER BY s.name
-        ");
-        $stmt->execute([':class_id' => $classId]);
-        return $stmt->fetchAll();
+    public function classAveragesBySubjects($classId, $dateFrom = null, $dateTo = null) {
+    $where = ['st.class_id = :class_id'];
+    $params = [':class_id' => $classId];
+
+    if ($dateFrom) {
+        $where[] = 'g.date >= :date_from';
+        $params[':date_from'] = $dateFrom;
     }
+
+    if ($dateTo) {
+        $where[] = 'g.date <= :date_to';
+        $params[':date_to'] = $dateTo;
+    }
+
+    $whereStr = implode(' AND ', $where);
+
+    $stmt = $this->db->prepare("
+        SELECT s.id, s.name, ROUND(AVG(g.grade), 2) as avg_grade,
+               COUNT(g.id) as grade_count
+        FROM grades g
+        JOIN subjects s ON g.subject_id = s.id
+        JOIN students st ON g.student_id = st.id
+        WHERE {$whereStr}
+        GROUP BY s.id, s.name
+        ORDER BY s.name
+    ");
+    $stmt->execute($params);
+    return $stmt->fetchAll();
+}
     
     /**
      * Статистика — количество оценок по значению для класса
      */
-    public function gradeDistribution($classId, $subjectId = null) {
-        $where = ['st.class_id = :class_id'];
-        $params = [':class_id' => $classId];
-        
-        if ($subjectId) {
-            $where[] = 'g.subject_id = :subject_id';
-            $params[':subject_id'] = $subjectId;
-        }
-        
-        $whereStr = implode(' AND ', $where);
-        
-        $stmt = $this->db->prepare("
-            SELECT g.grade, COUNT(*) as cnt
-            FROM grades g
-            JOIN students st ON g.student_id = st.id
-            WHERE {$whereStr}
-            GROUP BY g.grade
-            ORDER BY g.grade DESC
-        ");
-        $stmt->execute($params);
-        return $stmt->fetchAll();
+    public function gradeDistribution($classId, $subjectId = null, $dateFrom = null, $dateTo = null) {
+    $where = ['st.class_id = :class_id'];
+    $params = [':class_id' => $classId];
+
+    if ($subjectId) {
+        $where[] = 'g.subject_id = :subject_id';
+        $params[':subject_id'] = $subjectId;
     }
+
+    if ($dateFrom) {
+        $where[] = 'g.date >= :date_from';
+        $params[':date_from'] = $dateFrom;
+    }
+
+    if ($dateTo) {
+        $where[] = 'g.date <= :date_to';
+        $params[':date_to'] = $dateTo;
+    }
+
+    $whereStr = implode(' AND ', $where);
+
+    $stmt = $this->db->prepare("
+        SELECT g.grade, COUNT(*) as cnt
+        FROM grades g
+        JOIN students st ON g.student_id = st.id
+        WHERE {$whereStr}
+        GROUP BY g.grade
+        ORDER BY g.grade DESC
+    ");
+    $stmt->execute($params);
+    return $stmt->fetchAll();
+}
 }

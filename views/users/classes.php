@@ -93,56 +93,132 @@
         </div>
         
         <!-- ========== ПРЕДМЕТЫ ========== -->
-        <div class="space-y-4">
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 class="text-lg font-bold text-gray-800 mb-4">
-                    <i class="fas fa-book text-purple-500 mr-2"></i>Добавить предмет
-                </h3>
-                <form method="POST" action="<?= url('users/add-subject') ?>" class="flex gap-3">
+<div class="space-y-4">
+    
+    <!-- Добавить предмет -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h3 class="text-lg font-bold text-gray-800 mb-4">
+            <i class="fas fa-book text-purple-500 mr-2"></i>Добавить предмет
+        </h3>
+        <form method="POST" action="<?= url('users/add-subject') ?>" class="flex gap-3">
+            <?= csrfField() ?>
+            <input type="text" name="subject_name" placeholder="Название предмета" required
+                   class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+            <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-medium">
+                <i class="fas fa-plus mr-1"></i> Добавить
+            </button>
+        </form>
+    </div>
+    
+    <!-- Список предметов -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-4 border-b border-gray-100">
+            <h3 class="font-bold text-gray-800">
+                <i class="fas fa-list text-gray-400 mr-2"></i>Все предметы
+                <span class="text-gray-400 font-normal text-sm ml-1">(<?= count($subjects) ?>)</span>
+            </h3>
+        </div>
+        <?php if (!empty($subjects)): ?>
+        <div class="divide-y divide-gray-100">
+            <?php foreach ($subjects as $subj): ?>
+            <div class="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-book text-purple-500 text-sm"></i>
+                    </div>
+                    <span class="font-medium text-gray-800"><?= e($subj['name']) ?></span>
+                </div>
+                <form method="POST" action="<?= url('users/delete-subject/' . $subj['id']) ?>" 
+                      onsubmit="return confirm('Удалить предмет «<?= e($subj['name']) ?>»? Это возможно только если предмет нигде не используется.')">
                     <?= csrfField() ?>
-                    <input type="text" name="subject_name" placeholder="Название предмета" required
-                           class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
-                    <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-medium">
-                        <i class="fas fa-plus mr-1"></i> Добавить
+                    <button type="submit" class="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Удалить">
+                        <i class="fas fa-trash text-sm"></i>
                     </button>
                 </form>
             </div>
-            
-            <!-- Список предметов -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div class="p-4 border-b border-gray-100">
-                    <h3 class="font-bold text-gray-800">
-                        <i class="fas fa-list text-gray-400 mr-2"></i>Все предметы
-                        <span class="text-gray-400 font-normal text-sm ml-1">(<?= count($subjects) ?>)</span>
-                    </h3>
+            <?php endforeach; ?>
+        </div>
+        <?php else: ?>
+        <div class="p-8 text-center text-gray-400">
+            <i class="fas fa-book text-3xl mb-2 block"></i>
+            Предметов пока нет
+        </div>
+        <?php endif; ?>
+    </div>
+
+    <!-- Учебные периоды -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+    <h3 class="text-lg font-bold text-gray-800 mb-4">
+        <i class="fas fa-calendar-alt text-blue-600 mr-2"></i>Учебные периоды
+    </h3>
+
+    <form method="POST" action="<?= url('users/create-terms') ?>" class="flex flex-col sm:flex-row gap-3 items-end mb-5">
+        <?= csrfField() ?>
+
+        <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Год начала учебного года</label>
+            <input type="number" name="terms_year" value="<?= currentAcademicYear() + 1 ?>"
+                   class="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                   placeholder="Например 2026">
+        </div>
+
+        <button type="submit" class="px-5 py-2.5 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition font-medium">
+            <i class="fas fa-plus-circle mr-1"></i> Создать четверти
+        </button>
+    </form>
+
+    <p class="text-sm text-gray-500 mb-4">
+        Будут созданы 4 четверти для нового учебного года, если они ещё не существуют.
+    </p>
+
+    <?php if (!empty($availableYears)): ?>
+    <div class="space-y-4">
+        <?php foreach ($availableYears as $year): ?>
+            <?php
+            $yearTerms = array_filter($terms, function($t) use ($year) {
+                return (int)$t['year'] === (int)$year;
+            });
+            ?>
+            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                <div class="bg-gray-50 px-4 py-3 flex items-center justify-between">
+                    <h4 class="font-semibold text-gray-800">
+                        Учебный год <?= $year ?>/<?= $year + 1 ?>
+                    </h4>
+                    <span class="text-xs text-gray-500">
+                        <?= count($yearTerms) ?> <?= plural(count($yearTerms), 'период', 'периода', 'периодов') ?>
+                    </span>
                 </div>
-                <?php if (!empty($subjects)): ?>
+
+                <?php if (!empty($yearTerms)): ?>
                 <div class="divide-y divide-gray-100">
-                    <?php foreach ($subjects as $subj): ?>
-                    <div class="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-book text-purple-500 text-sm"></i>
-                            </div>
-                            <span class="font-medium text-gray-800"><?= e($subj['name']) ?></span>
+                    <?php foreach ($yearTerms as $term): ?>
+                    <div class="px-4 py-3 flex items-center justify-between text-sm">
+                        <div>
+                            <span class="font-medium text-gray-800"><?= e($term['name']) ?></span>
+                            <?php if (!empty($term['is_current'])): ?>
+                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700">
+                                    Текущая
+                                </span>
+                            <?php endif; ?>
                         </div>
-                        <form method="POST" action="<?= url('users/delete-subject/' . $subj['id']) ?>" 
-                              onsubmit="return confirm('Удалить предмет «<?= e($subj['name']) ?>»? Это возможно только если предмет нигде не используется.')">
-                            <?= csrfField() ?>
-                            <button type="submit" class="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Удалить">
-                                <i class="fas fa-trash text-sm"></i>
-                            </button>
-                        </form>
+                        <div class="text-gray-500 text-xs sm:text-sm">
+                            <?= formatDate($term['start_date']) ?> — <?= formatDate($term['end_date']) ?>
+                        </div>
                     </div>
                     <?php endforeach; ?>
                 </div>
                 <?php else: ?>
-                <div class="p-8 text-center text-gray-400">
-                    <i class="fas fa-book text-3xl mb-2 block"></i>
-                    Предметов пока нет
-                </div>
+                <div class="px-4 py-4 text-sm text-gray-400">Периоды не найдены</div>
                 <?php endif; ?>
             </div>
-        </div>
+        <?php endforeach; ?>
+    </div>
+    <?php else: ?>
+    <div class="text-sm text-gray-400">
+        Учебные периоды пока не созданы.
+    </div>
+    <?php endif; ?>
+</div>
+</div>
     </div>
 </div>

@@ -4,8 +4,9 @@
     <!-- Выбор класса -->
     <?php if (!isClassTeacher()): ?>
 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-    <form method="GET" action="<?= url('reports/progress') ?>" class="flex flex-col sm:flex-row gap-3">
+    <form method="GET" action="<?= url('reports/progress') ?>" class="flex flex-col lg:flex-row gap-3">
         <input type="hidden" name="route" value="reports/progress">
+
         <div class="flex-1">
             <select name="class_id" onchange="this.form.submit()"
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
@@ -17,7 +18,43 @@
                 <?php endforeach; ?>
             </select>
         </div>
+
+        <div class="flex-1">
+            <select name="academic_year" onchange="this.form.submit()"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                <?php foreach ($availableYears as $year): ?>
+                <option value="<?= $year ?>" <?= $selectedAcademicYear == $year ? 'selected' : '' ?>>
+                    <?= $year ?>/<?= $year + 1 ?>
+                </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+
+        <div class="flex-1">
+            <select name="term_id" onchange="this.form.submit()"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                <option value="0" <?= $selectedTermId == 0 ? 'selected' : '' ?>>Весь учебный год</option>
+                <?php foreach ($terms as $term): ?>
+                <option value="<?= $term['id'] ?>" <?= $selectedTermId == $term['id'] ? 'selected' : '' ?>>
+                    <?= e($term['name']) ?>
+                </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
     </form>
+</div>
+<?php else: ?>
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Учебный год</p>
+            <p class="text-lg font-bold text-gray-800"><?= $selectedAcademicYear ?>/<?= $selectedAcademicYear + 1 ?></p>
+        </div>
+        <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Период</p>
+            <p class="text-lg font-bold text-gray-800"><?= $selectedTerm ? e($selectedTerm['name']) : 'Весь учебный год' ?></p>
+        </div>
+    </div>
 </div>
 <?php endif; ?>
     
@@ -44,6 +81,17 @@
         </div>
     </div>
     
+    <?php if ($selectedTerm): ?>
+<div class="text-sm text-gray-500">
+    Период: <span class="font-medium text-gray-700"><?= e($selectedTerm['name']) ?></span>
+    (<?= formatDate($selectedTerm['start_date']) ?> — <?= formatDate($selectedTerm['end_date']) ?>)
+</div>
+<?php else: ?>
+<div class="text-sm text-gray-500">
+    Период: <span class="font-medium text-gray-700">весь учебный год</span>
+</div>
+<?php endif; ?>
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- График средних баллов по предметам -->
         <?php if (!empty($subjectAverages)): ?>
@@ -132,12 +180,17 @@
     </div>
     
     <?php else: ?>
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-        <i class="fas fa-chart-line text-5xl text-gray-300 mb-4"></i>
-        <p class="text-gray-500 text-lg">Выберите класс для просмотра отчёта</p>
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+    <div class="w-20 h-20 mx-auto mb-5 rounded-full bg-blue-50 flex items-center justify-center">
+        <i class="fas fa-school text-3xl text-blue-600"></i>
     </div>
-    <?php endif; ?>
+    <h3 class="text-xl font-bold text-gray-800 mb-2">Класс не выбран</h3>
+    <p class="text-gray-500 max-w-xl mx-auto">
+        Для просмотра отчёта по успеваемости выберите класс в верхнем списке.
+        После выбора система покажет средние баллы, рейтинг учеников и аналитику по предметам.
+    </p>
 </div>
+<?php endif; ?>
 
 <?php if (!empty($subjectAverages) || !empty($gradeDistribution)): ?>
 <script>

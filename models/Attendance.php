@@ -197,4 +197,75 @@ class AttendanceModel {
         $stmt->execute([':min' => $minAbsences]);
         return $stmt->fetchAll();
     }
+    /**
+ * Посещаемость по ученикам класса за период
+ */
+public function getClassStudentStatsByPeriod($classId, $dateFrom = null, $dateTo = null) {
+    $where = ['st.class_id = :class_id'];
+    $params = [':class_id' => $classId];
+
+    if ($dateFrom) {
+        $where[] = 'a.date >= :date_from';
+        $params[':date_from'] = $dateFrom;
+    }
+
+    if ($dateTo) {
+        $where[] = 'a.date <= :date_to';
+        $params[':date_to'] = $dateTo;
+    }
+
+    $whereStr = implode(' AND ', $where);
+
+    $stmt = $this->db->prepare("
+        SELECT st.id as student_id, u.full_name,
+            COUNT(a.id) as total,
+            SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) as present,
+            SUM(CASE WHEN a.status = 'absent' THEN 1 ELSE 0 END) as absent,
+            SUM(CASE WHEN a.status = 'late' THEN 1 ELSE 0 END) as late,
+            SUM(CASE WHEN a.status = 'excused' THEN 1 ELSE 0 END) as excused
+        FROM students st
+        JOIN users u ON st.user_id = u.id
+        LEFT JOIN attendance a ON a.student_id = st.id
+        WHERE {$whereStr} AND u.is_active = 1
+        GROUP BY st.id, u.full_name
+        ORDER BY u.full_name
+    ");
+    $stmt->execute($params);
+    return $stmt->fetchAll();
+}
+
+/**
+ * Часто пропускающие за период
+ */
+public function getFrequentAbsenteesByPeriod($minAbsences = 5, $dateFrom = null, $dateTo = null) {
+    $where = ["a.status = 'absent'"];
+    $params = [':min' => $minAbsences];
+
+    if ($dateFrom) {
+        $where[] = 'a.date >= :date_from';
+        $params[':date_from'] = $dateFrom;
+    }
+
+    if ($dateTo) {
+        $where[] = 'a.date <= :date_to';
+        $params[':date_to'] = $dateTo;
+    }
+
+    $whereStr = implode(' AND ', $where);
+
+    $stmt = $this->db->prepare("
+        SELECT st.id, u.full_name, c.name as class_name,
+               COUNT(*) as absence_count
+        FROM attendance a
+        JOIN students st ON a.student_id = st.id
+        JOIN users u ON st.user_id = u.id
+        JOIN classes c ON st.class_id = c.id
+        WHERE {$whereStr}
+        GROUP BY st.id, u.full_name, c.name
+        HAVING absence_count >= :min
+        ORDER BY absence_count DESC
+    ");
+    $stmt->execute($params);
+    return $stmt->fetchAll();
+}
 }

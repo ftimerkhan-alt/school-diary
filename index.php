@@ -97,6 +97,7 @@ switch ($controller) {
             case 'save-teacher-subjects': $ctrl->saveTeacherSubjects($param); break;
             case 'classes':     $ctrl->classes(); break;
             case 'add-class':   $ctrl->addClass(); break;
+            case 'create-terms': $ctrl->createTerms(); break;
             case 'delete-class': $ctrl->deleteClass($param); break;
             case 'add-subject': $ctrl->addSubject(); break;
             case 'delete-subject': $ctrl->deleteSubject($param); break;

@@ -10,6 +10,7 @@ class ReportsController {
     private $studentModel;
     private $classModel;
     private $subjectModel;
+    private $termModel;
     
     public function __construct() {
         require_once __DIR__ . '/../models/Grade.php';
@@ -18,6 +19,7 @@ class ReportsController {
         require_once __DIR__ . '/../models/Student.php';
         require_once __DIR__ . '/../models/ClassModel.php';
         require_once __DIR__ . '/../models/Subject.php';
+        require_once __DIR__ . '/../models/Term.php';
         
         $this->gradeModel = new GradeModel();
         $this->attendanceModel = new AttendanceModel();
@@ -25,6 +27,7 @@ class ReportsController {
         $this->studentModel = new Student();
         $this->classModel = new ClassModel();
         $this->subjectModel = new Subject();
+        $this->termModel = new Term();
     }
     
     /**
@@ -53,153 +56,209 @@ class ReportsController {
      * Отчёт по успеваемости
      */
     public function progress() {
-        requireRole(['admin', 'director', 'head_teacher', 'class_teacher']);
-        $pageTitle = 'Успеваемость';
-        
-        $classes = $this->classModel->getAll(currentAcademicYear());
-$selectedClassId = (int)get('class_id', 0);
+    requireRole(['admin', 'director', 'head_teacher', 'class_teacher', 'teacher']);
+    $pageTitle = 'Успеваемость';
 
-// Классный руководитель может смотреть только свой класс
-if (isClassTeacher()) {
-    $myClassId = getClassTeacherClassId() ?: 0;
-    $selectedClassId = $myClassId;
+    $classes = $this->classModel->getAll(currentAcademicYear());
 
-    $classes = array_values(array_filter($classes, function($c) use ($myClassId) {
-        return (int)$c['id'] === (int)$myClassId;
-    }));
+    $selectedClassId = (int)get('class_id', 0);
+    $selectedTermId = (int)get('term_id', 0);
+
+    $availableYears = $this->termModel->getAvailableYears();
+$selectedAcademicYear = (int)get('academic_year', currentAcademicYear());
+
+if ($selectedAcademicYear <= 0 && !empty($availableYears)) {
+    $selectedAcademicYear = (int)$availableYears[0];
 }
 
-if (!$selectedClassId && !empty($classes)) {
-    $selectedClassId = $classes[0]['id'];
-}
-        $classInfo = null;
-        $students = [];
-        $subjectAverages = [];
-        $studentAverages = [];
-        $gradeDistribution = [];
-        $excellentCount = 0;
-        $goodCount = 0;
-        
-        if ($selectedClassId) {
-            $classInfo = $this->classModel->findById($selectedClassId);
-            $students = $this->studentModel->getByClassId($selectedClassId);
-            $subjectAverages = $this->gradeModel->classAveragesBySubjects($selectedClassId);
-            $gradeDistribution = $this->gradeModel->gradeDistribution($selectedClassId);
-            
-            // Средние баллы по каждому ученику
-            foreach ($students as &$st) {
-                $avg = $this->studentModel->getAverageGrade($st['id']);
-                $st['average'] = $avg;
-                if ($avg >= 4.5) $excellentCount++;
-                elseif ($avg >= 3.5) $goodCount++;
-            }
-            unset($st);
-            
-            // Сортируем по среднему баллу
-            usort($students, function($a, $b) {
-                return ($b['average'] ?? 0) <=> ($a['average'] ?? 0);
-            });
-        }
-        
-        require __DIR__ . '/../views/layout/header.php';
-        require __DIR__ . '/../views/reports/progress.php';
-        require __DIR__ . '/../views/layout/footer.php';
+$terms = $this->termModel->getByAcademicYear($selectedAcademicYear);
+
+    // Классный руководитель может смотреть только свой класс
+    if (isClassTeacher()) {
+        $myClassId = getClassTeacherClassId() ?: 0;
+        $selectedClassId = $myClassId;
+
+        $classes = array_values(array_filter($classes, function($c) use ($myClassId) {
+            return (int)$c['id'] === (int)$myClassId;
+        }));
     }
+
+    $selectedTerm = $selectedTermId ? $this->termModel->findById($selectedTermId) : null;
+    $dateFrom = null;
+    $dateTo = null;
+
+    if ($selectedTerm) {
+        $dateFrom = $selectedTerm['start_date'];
+        $dateTo = $selectedTerm['end_date'];
+    }
+
+    $classInfo = null;
+    $students = [];
+    $subjectAverages = [];
+    $gradeDistribution = [];
+    $excellentCount = 0;
+    $goodCount = 0;
+
+    if ($selectedClassId) {
+        $classInfo = $this->classModel->findById($selectedClassId);
+
+        $students = $this->studentModel->getByClassId($selectedClassId);
+        $subjectAverages = $this->gradeModel->classAveragesBySubjects($selectedClassId, $dateFrom, $dateTo);
+        $gradeDistribution = $this->gradeModel->gradeDistribution($selectedClassId, null, $dateFrom, $dateTo);
+
+        foreach ($students as &$st) {
+            $avg = $this->studentModel->getAverageGradeByPeriod($st['id'], null, $dateFrom, $dateTo);
+            $st['average'] = $avg;
+
+            if ($avg !== null) {
+                if ($avg >= 4.5) {
+                    $excellentCount++;
+                } elseif ($avg >= 3.5) {
+                    $goodCount++;
+                }
+            }
+        }
+        unset($st);
+
+        usort($students, function($a, $b) {
+            return ($b['average'] ?? 0) <=> ($a['average'] ?? 0);
+        });
+    }
+
+    require __DIR__ . '/../views/layout/header.php';
+    require __DIR__ . '/../views/reports/progress.php';
+    require __DIR__ . '/../views/layout/footer.php';
+}
     
     /**
      * Отчёт по посещаемости
      */
     public function attendanceReport() {
-        requireRole(['admin', 'director', 'head_teacher', 'class_teacher']);
-        $pageTitle = 'Отчёт по посещаемости';
-        
-        $classes = $this->classModel->getAll(currentAcademicYear());
-$selectedClassId = (int)get('class_id', 0);
+    requireRole(['admin', 'director', 'head_teacher', 'class_teacher']);
+    $pageTitle = 'Отчёт по посещаемости';
 
-// Классный руководитель может смотреть только свой класс
-if (isClassTeacher()) {
-    $myClassId = getClassTeacherClassId() ?: 0;
-    $selectedClassId = $myClassId;
+    $classes = $this->classModel->getAll(currentAcademicYear());
+    $availableYears = $this->termModel->getAvailableYears();
 
-    $classes = array_values(array_filter($classes, function($c) use ($myClassId) {
-        return (int)$c['id'] === (int)$myClassId;
-    }));
-}
+    $selectedClassId = (int)get('class_id', 0);
+    $selectedAcademicYear = (int)get('academic_year', currentAcademicYear());
+    $selectedTermId = (int)get('term_id', 0);
 
-if (!$selectedClassId && !empty($classes)) {
-    $selectedClassId = $classes[0]['id'];
-}
-        
-        $classInfo = null;
-        $classStats = null;
-        $studentStats = [];
-        $frequentAbsentees = [];
-        
-        if ($selectedClassId) {
-            $classInfo = $this->classModel->findById($selectedClassId);
-            $classStats = $this->attendanceModel->getClassStats($selectedClassId);
-            $studentStats = $this->attendanceModel->getClassStudentStats($selectedClassId);
-        }
-        
-        $frequentAbsentees = $this->attendanceModel->getFrequentAbsentees(3);
-        
-        require __DIR__ . '/../views/layout/header.php';
-        require __DIR__ . '/../views/reports/attendance-report.php';
-        require __DIR__ . '/../views/layout/footer.php';
+    $terms = $this->termModel->getByAcademicYear($selectedAcademicYear);
+
+    // Классный руководитель может смотреть только свой класс
+    if (isClassTeacher()) {
+        $myClassId = getClassTeacherClassId() ?: 0;
+        $selectedClassId = $myClassId;
+
+        $classes = array_values(array_filter($classes, function($c) use ($myClassId) {
+            return (int)$c['id'] === (int)$myClassId;
+        }));
     }
+
+    $selectedTerm = $selectedTermId ? $this->termModel->findById($selectedTermId) : null;
+    $dateFrom = null;
+    $dateTo = null;
+
+    if ($selectedTerm) {
+        $dateFrom = $selectedTerm['start_date'];
+        $dateTo = $selectedTerm['end_date'];
+    } else {
+        // Если выбран "весь учебный год", ограничиваем рамками этого года
+        $dateFrom = $selectedAcademicYear . '-09-01';
+        $dateTo = ($selectedAcademicYear + 1) . '-08-31';
+    }
+
+    $classInfo = null;
+    $classStats = null;
+    $studentStats = [];
+    $frequentAbsentees = [];
+
+    if ($selectedClassId) {
+        $classInfo = $this->classModel->findById($selectedClassId);
+        $classStats = $this->attendanceModel->getClassStats($selectedClassId, $dateFrom, $dateTo);
+        $studentStats = $this->attendanceModel->getClassStudentStatsByPeriod($selectedClassId, $dateFrom, $dateTo);
+    }
+
+    $frequentAbsentees = $this->attendanceModel->getFrequentAbsenteesByPeriod(3, $dateFrom, $dateTo);
+
+    require __DIR__ . '/../views/layout/header.php';
+    require __DIR__ . '/../views/reports/attendance-report.php';
+    require __DIR__ . '/../views/layout/footer.php';
+}
     
     /**
      * Итоговые ведомости
      */
     public function finalReport() {
-        requireRole(['admin', 'director', 'head_teacher', 'class_teacher']);
-        $pageTitle = 'Итоговая ведомость';
-        
-        $classes = $this->classModel->getAll(currentAcademicYear());
-$selectedClassId = (int)get('class_id', 0);
+    requireRole(['admin', 'director', 'head_teacher', 'class_teacher']);
+    $pageTitle = 'Итоговая ведомость';
 
-// Классный руководитель может смотреть только свой класс
-if (isClassTeacher()) {
-    $myClassId = getClassTeacherClassId() ?: 0;
-    $selectedClassId = $myClassId;
+    $classes = $this->classModel->getAll(currentAcademicYear());
+    $availableYears = $this->termModel->getAvailableYears();
 
-    $classes = array_values(array_filter($classes, function($c) use ($myClassId) {
-        return (int)$c['id'] === (int)$myClassId;
-    }));
-}
+    $selectedClassId = (int)get('class_id', 0);
+    $selectedAcademicYear = (int)get('academic_year', currentAcademicYear());
+    $selectedTermId = (int)get('term_id', 0);
 
-if (!$selectedClassId && !empty($classes)) {
-    $selectedClassId = $classes[0]['id'];
-}
-        
-        $classInfo = null;
-        $students = [];
-        $subjects = [];
-        $gradesTable = [];
-        
-        if ($selectedClassId) {
-            $classInfo = $this->classModel->findById($selectedClassId);
-            $students = $this->studentModel->getByClassId($selectedClassId);
-            $subjects = $this->classModel->getSubjects($selectedClassId);
-            
-            // Собираем средние баллы для каждого ученика по каждому предмету
-            foreach ($students as $st) {
-                $row = ['student' => $st, 'grades' => [], 'overall' => null];
-                $allAvgs = [];
-                foreach ($subjects as $subj) {
-                    $avg = $this->studentModel->getAverageGrade($st['id'], $subj['id']);
-                    $row['grades'][$subj['id']] = $avg;
-                    if ($avg !== null) $allAvgs[] = $avg;
-                }
-                $row['overall'] = count($allAvgs) > 0 ? round(array_sum($allAvgs) / count($allAvgs), 2) : null;
-                $gradesTable[] = $row;
-            }
-        }
-        
-        require __DIR__ . '/../views/layout/header.php';
-        require __DIR__ . '/../views/reports/final.php';
-        require __DIR__ . '/../views/layout/footer.php';
+    if ($selectedAcademicYear <= 0 && !empty($availableYears)) {
+        $selectedAcademicYear = (int)$availableYears[0];
     }
+
+    $terms = $this->termModel->getByAcademicYear($selectedAcademicYear);
+
+    if (isClassTeacher()) {
+        $myClassId = getClassTeacherClassId() ?: 0;
+        $selectedClassId = $myClassId;
+
+        $classes = array_values(array_filter($classes, function($c) use ($myClassId) {
+            return (int)$c['id'] === (int)$myClassId;
+        }));
+    }
+
+    $selectedTerm = $selectedTermId ? $this->termModel->findById($selectedTermId) : null;
+    $dateFrom = null;
+    $dateTo = null;
+
+    if ($selectedTerm) {
+        $dateFrom = $selectedTerm['start_date'];
+        $dateTo = $selectedTerm['end_date'];
+    } else {
+        $dateFrom = $selectedAcademicYear . '-09-01';
+        $dateTo = ($selectedAcademicYear + 1) . '-08-31';
+    }
+
+    $classInfo = null;
+    $students = [];
+    $subjects = [];
+    $gradesTable = [];
+
+    if ($selectedClassId) {
+        $classInfo = $this->classModel->findById($selectedClassId);
+        $students = $this->studentModel->getByClassId($selectedClassId);
+        $subjects = $this->classModel->getSubjects($selectedClassId);
+
+        foreach ($students as $st) {
+            $row = ['student' => $st, 'grades' => [], 'overall' => null];
+            $allAvgs = [];
+
+            foreach ($subjects as $subj) {
+                $avg = $this->studentModel->getAverageGradeByPeriod($st['id'], $subj['id'], $dateFrom, $dateTo);
+                $row['grades'][$subj['id']] = $avg;
+                if ($avg !== null) {
+                    $allAvgs[] = $avg;
+                }
+            }
+
+            $row['overall'] = count($allAvgs) > 0 ? round(array_sum($allAvgs) / count($allAvgs), 2) : null;
+            $gradesTable[] = $row;
+        }
+    }
+
+    require __DIR__ . '/../views/layout/header.php';
+    require __DIR__ . '/../views/reports/final.php';
+    require __DIR__ . '/../views/layout/footer.php';
+}
     
     /**
      * Нагрузка учителей

@@ -200,4 +200,38 @@ class Student {
         $result = $stmt->fetch();
         return $result['avg_grade'];
     }
+    /**
+ * Средний балл ученика за период
+ */
+public function getAverageGradeByPeriod($studentId, $subjectId = null, $dateFrom = null, $dateTo = null) {
+    $where = ['g.student_id = :student_id'];
+    $params = [':student_id' => $studentId];
+
+    if ($subjectId) {
+        $where[] = 'g.subject_id = :subject_id';
+        $params[':subject_id'] = $subjectId;
+    }
+
+    if ($dateFrom) {
+        $where[] = 'g.date >= :date_from';
+        $params[':date_from'] = $dateFrom;
+    }
+
+    if ($dateTo) {
+        $where[] = 'g.date <= :date_to';
+        $params[':date_to'] = $dateTo;
+    }
+
+    $whereStr = implode(' AND ', $where);
+
+    $stmt = $this->db->prepare("
+        SELECT ROUND(AVG(g.grade), 2) as avg_grade
+        FROM grades g
+        WHERE {$whereStr}
+    ");
+    $stmt->execute($params);
+    $result = $stmt->fetch();
+
+    return $result['avg_grade'];
+}
 }

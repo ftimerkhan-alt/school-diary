@@ -9,6 +9,7 @@ class UserController {
     private $studentModel;
     private $classModel;
     private $subjectModel;
+    private $termModel;
     
     public function __construct() {
         require_once __DIR__ . '/../models/User.php';
@@ -16,12 +17,14 @@ class UserController {
         require_once __DIR__ . '/../models/Student.php';
         require_once __DIR__ . '/../models/ClassModel.php';
         require_once __DIR__ . '/../models/Subject.php';
+        require_once __DIR__ . '/../models/Term.php';
         
         $this->userModel = new User();
         $this->teacherModel = new Teacher();
         $this->studentModel = new Student();
         $this->classModel = new ClassModel();
         $this->subjectModel = new Subject();
+        $this->termModel = new Term();
     }
     
     /**
@@ -466,13 +469,15 @@ if (in_array($newRoleName, ['class_teacher', 'head_teacher'])) {
         requireRole(['admin', 'head_teacher']);
         
         $pageTitle = 'Классы и предметы';
-        $classes = $this->classModel->getAll();
-        $subjects = $this->subjectModel->getAll();
-        $teachers = $this->teacherModel->getAll();
-        
-        require __DIR__ . '/../views/layout/header.php';
-        require __DIR__ . '/../views/users/classes.php';
-        require __DIR__ . '/../views/layout/footer.php';
+$classes = $this->classModel->getAll();
+$subjects = $this->subjectModel->getAll();
+$teachers = $this->teacherModel->getAll();
+$terms = $this->termModel->getAll();
+$availableYears = $this->termModel->getAvailableYears();
+
+require __DIR__ . '/../views/layout/header.php';
+require __DIR__ . '/../views/users/classes.php';
+require __DIR__ . '/../views/layout/footer.php';
     }
     
     /**
@@ -564,4 +569,28 @@ if (in_array($newRoleName, ['class_teacher', 'head_teacher'])) {
         
         redirect('users/classes');
     }
+
+    /**
+ * Создание учебных периодов на новый учебный год
+ */
+public function createTerms() {
+    requireRole(['admin']);
+    validateCSRF();
+
+    $year = (int)post('terms_year', 0);
+
+    if ($year <= 0) {
+        setFlash('error', 'Некорректный учебный год');
+        redirect('users/classes');
+    }
+
+    try {
+        $this->termModel->createAcademicYearTerms($year);
+        setFlash('success', 'Учебные периоды для ' . $year . '/' . ($year + 1) . ' успешно созданы');
+    } catch (Exception $e) {
+        setFlash('error', $e->getMessage());
+    }
+
+    redirect('users/classes');
+}
 }

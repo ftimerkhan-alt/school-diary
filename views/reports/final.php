@@ -3,9 +3,11 @@
     
 <?php if (!isClassTeacher()): ?>
 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-    <form method="GET" action="<?= url('reports/final') ?>" class="flex flex-col sm:flex-row gap-3 items-end">
+    <form method="GET" action="<?= url('reports/final') ?>" class="flex flex-col lg:flex-row gap-3 items-end">
         <input type="hidden" name="route" value="reports/final">
+
         <div class="flex-1">
+            <label class="block text-xs font-semibold text-gray-500 mb-1">Класс</label>
             <select name="class_id" onchange="this.form.submit()"
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
                 <option value="">Выберите класс</option>
@@ -16,7 +18,45 @@
                 <?php endforeach; ?>
             </select>
         </div>
+
+        <div class="flex-1">
+            <label class="block text-xs font-semibold text-gray-500 mb-1">Учебный год</label>
+            <select name="academic_year" onchange="this.form.submit()"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                <?php foreach ($availableYears as $year): ?>
+                <option value="<?= $year ?>" <?= $selectedAcademicYear == $year ? 'selected' : '' ?>>
+                    <?= $year ?>/<?= $year + 1 ?>
+                </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+
+        <div class="flex-1">
+            <label class="block text-xs font-semibold text-gray-500 mb-1">Период</label>
+            <select name="term_id" onchange="this.form.submit()"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                <option value="0" <?= $selectedTermId == 0 ? 'selected' : '' ?>>Весь учебный год</option>
+                <?php foreach ($terms as $term): ?>
+                <option value="<?= $term['id'] ?>" <?= $selectedTermId == $term['id'] ? 'selected' : '' ?>>
+                    <?= e($term['name']) ?>
+                </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
     </form>
+</div>
+<?php else: ?>
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Учебный год</p>
+            <p class="text-lg font-bold text-gray-800"><?= $selectedAcademicYear ?>/<?= $selectedAcademicYear + 1 ?></p>
+        </div>
+        <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Период</p>
+            <p class="text-lg font-bold text-gray-800"><?= $selectedTerm ? e($selectedTerm['name']) : 'Весь учебный год' ?></p>
+        </div>
+    </div>
 </div>
 <?php endif; ?>
     
@@ -25,11 +65,21 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" id="printArea">
         
         <div class="p-4 border-b border-gray-100 text-center">
-            <h2 class="text-lg font-bold text-gray-800">
-                Итоговая ведомость — Класс <?= e($classInfo['name']) ?>
-            </h2>
-            <p class="text-sm text-gray-500">Учебный год <?= currentAcademicYear() ?>/<?= currentAcademicYear() + 1 ?></p>
-        </div>
+    <h2 class="text-lg font-bold text-gray-800">
+        Итоговая ведомость — Класс <?= e($classInfo['name']) ?>
+    </h2>
+
+    <p class="text-sm text-gray-500">
+        Учебный год <?= currentAcademicYear() ?>/<?= currentAcademicYear() + 1 ?>
+    </p>
+
+    <p class="text-sm text-gray-600 mt-1">
+        Период:
+        <span class="font-medium text-gray-800">
+            <?= !empty($selectedTerm) ? e($selectedTerm['name']) : 'Весь учебный год' ?>
+        </span>
+    </p>
+</div>
         
         <div class="overflow-x-auto">
             <table class="w-full text-sm" id="finalTable">
@@ -89,19 +139,30 @@
 </div>
     
     <?php else: ?>
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-        <i class="fas fa-file-alt text-5xl text-gray-300 mb-4"></i>
-        <p class="text-gray-500">Нет данных для формирования ведомости</p>
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+    <div class="w-20 h-20 mx-auto mb-5 rounded-full bg-blue-50 flex items-center justify-center">
+        <i class="fas fa-file-alt text-3xl text-blue-600"></i>
     </div>
-    <?php endif; ?>
+    <h3 class="text-xl font-bold text-gray-800 mb-2">Класс не выбран</h3>
+    <p class="text-gray-500 max-w-xl mx-auto">
+        Для формирования итоговой ведомости выберите класс в верхнем списке.
+        После выбора будет построена сводная таблица оценок по предметам за выбранный период.
+    </p>
+</div>
+<?php endif; ?>
 </div>
 
 <script>
 function printTable() {
-    const content = document.getElementById('printArea');
-    const win = window.open('', '_blank');
+    var content = document.getElementById('printArea');
+    if (!content) {
+        alert('Нечего печатать');
+        return;
+    }
+
+    var win = window.open('', '_blank');
     win.document.write('<html><head><title>Итоговая ведомость</title>');
-    win.document.write('<style>body{font-family:Arial,sans-serif;font-size:12px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #333;padding:4px 8px;text-align:center}th{background:#eee}td:nth-child(2){text-align:left}.text-center{text-align:center}h2{text-align:center;margin:10px 0 5px}p{text-align:center;margin:0 0 15px}</style>');
+    win.document.write('<style>body{font-family:Arial,sans-serif;font-size:12px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #333;padding:4px 8px;text-align:center}th{background:#eee}td:nth-child(2){text-align:left}h2,p{text-align:center;margin:5px 0}</style>');
     win.document.write('</head><body>');
     win.document.write(content.innerHTML);
     win.document.write('</body></html>');
