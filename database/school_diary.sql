@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: 127.0.0.1:3306
--- Время создания: Мар 22 2026 г., 20:03
+-- Время создания: Мар 24 2026 г., 11:22
 -- Версия сервера: 8.0.30
 -- Версия PHP: 7.4.30
 
@@ -100,7 +100,7 @@ CREATE TABLE `classes` (
 INSERT INTO `classes` (`id`, `name`, `year`, `class_teacher_id`) VALUES
 (1, '9А', 2025, 1),
 (2, '9Б', 2025, 3),
-(3, '10А', 2025, NULL),
+(3, '10А', 2025, 39),
 (4, '10Б', 2025, NULL),
 (5, '11А', 2025, NULL),
 (6, '8А', 2025, NULL),
@@ -217,7 +217,8 @@ INSERT INTO `grades` (`id`, `student_id`, `subject_id`, `teacher_id`, `grade`, `
 (58, 1, 2, 2, 3, '2026-02-27', '', 'current', '2026-03-02 12:57:15', '2026-03-02 12:57:15'),
 (59, 1, 2, 2, 4, '2026-02-26', '', 'current', '2026-03-02 12:57:25', '2026-03-02 12:57:25'),
 (60, 4, 2, 2, 5, '2026-03-03', '', 'current', '2026-03-02 12:57:36', '2026-03-02 12:57:36'),
-(61, 2, 5, 3, 4, '2026-02-25', '', 'homework', '2026-03-02 13:34:05', '2026-03-02 13:34:05');
+(61, 2, 5, 3, 4, '2026-02-25', '', 'homework', '2026-03-02 13:34:05', '2026-03-02 13:34:05'),
+(62, 2, 2, 1, 5, '2025-09-01', '', 'current', '2026-03-24 07:27:01', '2026-03-24 07:27:01');
 
 -- --------------------------------------------------------
 
@@ -302,10 +303,11 @@ CREATE TABLE `parent_student` (
 
 INSERT INTO `parent_student` (`id`, `parent_user_id`, `student_id`, `relationship`, `is_primary`) VALUES
 (1, 18, 1, 'Мать', 1),
-(2, 19, 2, 'Отец', 1),
 (3, 20, 3, 'Мать', 1),
 (4, 21, 4, 'Отец', 1),
-(5, 22, 5, 'Мать', 1);
+(5, 22, 5, 'Мать', 1),
+(6, 19, 2, 'Отец', 1),
+(7, 19, 12, 'Отец', 0);
 
 -- --------------------------------------------------------
 
@@ -509,7 +511,9 @@ INSERT INTO `teachers` (`id`, `user_id`, `is_class_teacher`) VALUES
 (4, 7, 0),
 (36, 65, 0),
 (37, 66, 0),
-(38, 67, 0);
+(38, 67, 0),
+(39, 3, 1),
+(40, 68, 0);
 
 -- --------------------------------------------------------
 
@@ -751,11 +755,11 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `login`, `password_hash`, `full_name`, `email`, `phone`, `role_id`, `is_active`, `last_login`, `created_at`, `updated_at`) VALUES
-(1, 'admin', '$2y$10$YGVGVJ5CFLFvl6XaoCIQ5uyF5NEKI3jkxKlLej/QQI2tJBsMdObH2', 'Администратор Системы', 'admin@school.ru', '+7(999)000-00-01', 1, 1, '2026-03-22 17:02:11', '2026-03-01 11:20:04', '2026-03-22 17:02:11'),
+(1, 'admin', '$2y$10$YGVGVJ5CFLFvl6XaoCIQ5uyF5NEKI3jkxKlLej/QQI2tJBsMdObH2', 'Администратор Системы', 'admin@school.ru', '+7(999)000-00-01', 1, 1, '2026-03-24 07:31:19', '2026-03-01 11:20:04', '2026-03-24 07:31:19'),
 (2, 'director', '$2y$10$YGVGVJ5CFLFvl6XaoCIQ5uyF5NEKI3jkxKlLej/QQI2tJBsMdObH2', 'Соколов Виктор Иванович', 'director@school.ru', '+7(999)000-00-02', 2, 1, '2026-03-22 16:56:00', '2026-03-01 11:20:04', '2026-03-22 16:56:00'),
-(3, 'headteacher', '$2y$10$YGVGVJ5CFLFvl6XaoCIQ5uyF5NEKI3jkxKlLej/QQI2tJBsMdObH2', 'Васильева Елена Петровна', 'headteacher@school.ru', '+7(999)000-00-03', 3, 1, '2026-03-22 13:20:11', '2026-03-01 11:20:04', '2026-03-22 13:20:11'),
-(4, 'classteacher', '$2y$10$YGVGVJ5CFLFvl6XaoCIQ5uyF5NEKI3jkxKlLej/QQI2tJBsMdObH2', 'Михайлова Ирина Александровна', 'classteacher@school.ru', '+7(999)000-00-04', 4, 1, '2026-03-22 16:56:08', '2026-03-01 11:20:04', '2026-03-22 16:56:08'),
-(5, 'teacher1', '$2y$10$YGVGVJ5CFLFvl6XaoCIQ5uyF5NEKI3jkxKlLej/QQI2tJBsMdObH2', 'Петрова Анна Михайловна', 'petrova@school.ru', '+7(999)000-00-05', 5, 1, '2026-03-22 16:55:31', '2026-03-01 11:20:04', '2026-03-22 16:55:31'),
+(3, 'headteacher', '$2y$10$YGVGVJ5CFLFvl6XaoCIQ5uyF5NEKI3jkxKlLej/QQI2tJBsMdObH2', 'Васильева Елена Петровна', 'headteacher@school.ru', '+7(999)000-00-03', 3, 1, '2026-03-23 18:00:44', '2026-03-01 11:20:04', '2026-03-23 18:00:44'),
+(4, 'classteacher', '$2y$10$YGVGVJ5CFLFvl6XaoCIQ5uyF5NEKI3jkxKlLej/QQI2tJBsMdObH2', 'Михайлова Ирина Александровна', 'classteacher@school.ru', '+7(999)000-00-04', 4, 1, '2026-03-24 07:27:57', '2026-03-01 11:20:04', '2026-03-24 07:27:57'),
+(5, 'teacher1', '$2y$10$YGVGVJ5CFLFvl6XaoCIQ5uyF5NEKI3jkxKlLej/QQI2tJBsMdObH2', 'Петрова Анна Михайловна', 'petrova@school.ru', '+7(999)000-00-05', 5, 1, '2026-03-23 17:28:26', '2026-03-01 11:20:04', '2026-03-23 17:28:26'),
 (6, 'teacher2', '$2y$10$YGVGVJ5CFLFvl6XaoCIQ5uyF5NEKI3jkxKlLej/QQI2tJBsMdObH2', 'Козлов Дмитрий Сергеевич', 'kozlov@school.ru', '+7(999)000-00-06', 4, 1, '2026-03-02 13:33:42', '2026-03-01 11:20:04', '2026-03-03 17:35:13'),
 (7, 'teacher3', '$2y$10$YGVGVJ5CFLFvl6XaoCIQ5uyF5NEKI3jkxKlLej/QQI2tJBsMdObH2', 'Новикова Светлана Васильевна', 'novikova@school.ru', '+7(999)000-00-07', 5, 1, '2026-03-02 06:01:18', '2026-03-01 11:20:04', '2026-03-02 06:01:18'),
 (8, 'student1', '$2y$10$YGVGVJ5CFLFvl6XaoCIQ5uyF5NEKI3jkxKlLej/QQI2tJBsMdObH2', 'Смирнов Алексей Дмитриевич', 'smirnov@school.ru', '', 6, 1, '2026-03-22 13:19:33', '2026-03-01 11:20:04', '2026-03-22 16:20:45'),
@@ -769,14 +773,15 @@ INSERT INTO `users` (`id`, `login`, `password_hash`, `full_name`, `email`, `phon
 (16, 'student9', '$2y$10$YGVGVJ5CFLFvl6XaoCIQ5uyF5NEKI3jkxKlLej/QQI2tJBsMdObH2', 'Федоров Илья Константинович', 'fedorov@school.ru', NULL, 6, 1, NULL, '2026-03-01 11:20:04', '2026-03-01 12:10:38'),
 (17, 'student10', '$2y$10$YGVGVJ5CFLFvl6XaoCIQ5uyF5NEKI3jkxKlLej/QQI2tJBsMdObH2', 'Николаева Виктория Денисовна', 'nikolaeva@school.ru', NULL, 6, 1, NULL, '2026-03-01 11:20:04', '2026-03-01 12:10:38'),
 (18, 'parent1', '$2y$10$YGVGVJ5CFLFvl6XaoCIQ5uyF5NEKI3jkxKlLej/QQI2tJBsMdObH2', 'Смирнова Ольга Николаевна', 'smirnova@mail.ru', '+7(999)100-00-01', 7, 1, '2026-03-04 15:37:26', '2026-03-01 11:20:04', '2026-03-04 15:37:26'),
-(19, 'parent2', '$2y$10$YGVGVJ5CFLFvl6XaoCIQ5uyF5NEKI3jkxKlLej/QQI2tJBsMdObH2', 'Иванов Сергей Петрович', 'ivanov_s@mail.ru', '+7(999)100-00-02', 7, 1, '2026-03-02 06:00:37', '2026-03-01 11:20:04', '2026-03-02 06:00:37'),
+(19, 'parent2', '$2y$10$YGVGVJ5CFLFvl6XaoCIQ5uyF5NEKI3jkxKlLej/QQI2tJBsMdObH2', 'Иванов Сергей Петрович', 'ivanov_s@mail.ru', '+7(999)100-00-02', 7, 1, '2026-03-23 17:03:35', '2026-03-01 11:20:04', '2026-03-23 17:03:35'),
 (20, 'parent3', '$2y$10$YGVGVJ5CFLFvl6XaoCIQ5uyF5NEKI3jkxKlLej/QQI2tJBsMdObH2', 'Кузнецова Елена Викторовна', 'kuznetsova_e@mail.ru', '+7(999)100-00-03', 7, 1, '2026-03-01 12:28:10', '2026-03-01 11:20:04', '2026-03-01 12:28:10'),
 (21, 'parent4', '$2y$10$YGVGVJ5CFLFvl6XaoCIQ5uyF5NEKI3jkxKlLej/QQI2tJBsMdObH2', 'Попов Олег Иванович', 'popov_o@mail.ru', '+7(999)100-00-04', 7, 1, NULL, '2026-03-01 11:20:04', '2026-03-01 12:10:38'),
 (22, 'parent5', '$2y$10$YGVGVJ5CFLFvl6XaoCIQ5uyF5NEKI3jkxKlLej/QQI2tJBsMdObH2', 'Волкова Татьяна Сергеевна', 'volkova_t@mail.ru', '+7(999)100-00-05', 7, 1, NULL, '2026-03-01 11:20:04', '2026-03-01 12:10:38'),
 (64, 'ivanov', '$2y$10$YdZdF/GfEZ9fw78FlfNvMeEsNM6eMZNQq6vr5yDm9QUX.AiHY87kW', 'Иванов Иван Иванович', '', '', 6, 1, NULL, '2026-03-01 18:11:40', '2026-03-01 18:11:40'),
 (65, 'teacher4', '$2y$10$S2iERx7hkVhuqrEcrsdnXeGNpvSMe8r9cowgX5b.JGtonRY.uuj0K', 'Минтимер Шарипович Шаймиев', '', '', 5, 1, NULL, '2026-03-01 18:15:15', '2026-03-01 18:15:15'),
 (66, 'putin', '$2y$10$FiRrPCt5i64hmgljKCRYEOElAyldSmzy7QNIiNwFudk4u2pvQffii', 'Владимир Владимирович Путин', '', '', 5, 1, '2026-03-02 05:55:14', '2026-03-01 18:15:31', '2026-03-02 05:55:14'),
-(67, 'kolbasenko', '$2y$10$kGIRUg5ZVHMNK1gCQ6Iugue0IAOWljvQB3pBoJ1cvLCT0rowsKVcS', 'Колбасенко Данил Стандофович', '', '', 5, 0, NULL, '2026-03-01 18:16:12', '2026-03-01 18:38:51');
+(67, 'kolbasenko', '$2y$10$kGIRUg5ZVHMNK1gCQ6Iugue0IAOWljvQB3pBoJ1cvLCT0rowsKVcS', 'Колбасенко Данил Стандофович', '', '', 5, 0, NULL, '2026-03-01 18:16:12', '2026-03-01 18:38:51'),
+(68, 'putin1', '$2y$10$BLlUdhhfpRQs7TPB4/A4IeEW06OYOZni89haVt6StRrRu1NI0fV.u', 'Путин Владимир Владимирович', '', '+79999999999', 3, 1, NULL, '2026-03-23 17:23:06', '2026-03-23 17:23:06');
 
 --
 -- Индексы сохранённых таблиц
@@ -952,7 +957,7 @@ ALTER TABLE `final_grades`
 -- AUTO_INCREMENT для таблицы `grades`
 --
 ALTER TABLE `grades`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=62;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=63;
 
 --
 -- AUTO_INCREMENT для таблицы `login_attempts`
@@ -970,7 +975,7 @@ ALTER TABLE `messages`
 -- AUTO_INCREMENT для таблицы `parent_student`
 --
 ALTER TABLE `parent_student`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT для таблицы `reports`
@@ -1006,7 +1011,7 @@ ALTER TABLE `subjects`
 -- AUTO_INCREMENT для таблицы `teachers`
 --
 ALTER TABLE `teachers`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 
 --
 -- AUTO_INCREMENT для таблицы `teacher_class_subjects`
@@ -1036,7 +1041,7 @@ ALTER TABLE `terms`
 -- AUTO_INCREMENT для таблицы `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=68;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=69;
 
 --
 -- Ограничения внешнего ключа сохраненных таблиц
