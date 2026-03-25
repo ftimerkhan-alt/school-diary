@@ -94,8 +94,8 @@ class GradeModel {
      */
     public function create($data) {
         $stmt = $this->db->prepare("
-            INSERT INTO grades (student_id, subject_id, teacher_id, grade, date, comment, grade_type)
-            VALUES (:student_id, :subject_id, :teacher_id, :grade, :date, :comment, :grade_type)
+            INSERT INTO grades (student_id, subject_id, teacher_id, grade, date, lesson_order, comment, grade_type)
+VALUES (:student_id, :subject_id, :teacher_id, :grade, :date, :lesson_order, :comment, :grade_type)
         ");
         $stmt->execute([
             ':student_id'  => $data['student_id'],
@@ -105,6 +105,7 @@ class GradeModel {
             ':date'        => $data['date'],
             ':comment'     => $data['comment'] ?? null,
             ':grade_type'  => $data['grade_type'] ?? 'current',
+            ':lesson_order' => $data['lesson_order'] ?? null,
         ]);
         return $this->db->lastInsertId();
     }

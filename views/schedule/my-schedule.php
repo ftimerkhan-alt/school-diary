@@ -8,6 +8,56 @@
         </h2>
     </div>
     <?php endif; ?>
+
+    <?php if (currentRole() === 'parent' && !empty($children)): ?>
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+    <div class="flex flex-col sm:flex-row gap-3 items-center justify-between">
+        <div>
+            <p class="text-sm font-semibold text-gray-700">Выберите ребёнка</p>
+            <p class="text-xs text-gray-500">Расписание, оценки и посещаемость будут показаны для выбранного ребёнка</p>
+        </div>
+
+        <form method="GET" action="<?= url('schedule/my-schedule') ?>" class="w-full sm:w-auto">
+            <input type="hidden" name="route" value="schedule/my-schedule">
+            <input type="hidden" name="week_offset" value="<?= (int)$weekOffset ?>">
+
+            <select name="student_id" onchange="this.form.submit()"
+                    class="w-full sm:w-80 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                <?php foreach ($children as $child): ?>
+                <option value="<?= (int)$child['id'] ?>" <?= ((int)$selectedStudentId === (int)$child['id']) ? 'selected' : '' ?>>
+                    <?= e($child['full_name']) ?> (<?= e($child['class_name']) ?>)
+                </option>
+                <?php endforeach; ?>
+            </select>
+        </form>
+    </div>
+</div>
+<?php endif; ?>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+    <div class="flex items-center justify-between flex-wrap gap-3">
+        <a href="<?= url('schedule/my-schedule?week_offset=' . ($weekOffset - 1)
+    . (currentRole() === 'parent' && !empty($selectedStudentId) ? '&student_id=' . (int)$selectedStudentId : '')
+) ?>"
+   class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm font-medium">
+    <i class="fas fa-chevron-left mr-1"></i> Предыдущая неделя
+</a>
+
+        <div class="text-center">
+            <p class="text-sm text-gray-500">Период недели</p>
+            <p class="font-semibold text-gray-800">
+                <?= formatDate($weekStart) ?> — <?= formatDate($weekEnd) ?>
+            </p>
+        </div>
+
+        <a href="<?= url('schedule/my-schedule?week_offset=' . ($weekOffset + 1)
+    . (currentRole() === 'parent' && !empty($selectedStudentId) ? '&student_id=' . (int)$selectedStudentId : '')
+) ?>"
+   class="px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition text-sm font-medium">
+    Следующая неделя <i class="fas fa-chevron-right ml-1"></i>
+</a>
+    </div>
+</div>
     
     <?php if (!empty($schedule)): ?>
     
@@ -17,13 +67,19 @@
             $isToday = ($day == $todayDow);
         ?>
         <div class="bg-white rounded-xl shadow-sm border <?= $isToday ? 'border-indigo-300 ring-2 ring-indigo-100' : 'border-gray-100' ?> overflow-hidden">
-            <div class="px-4 py-3 <?= $isToday ? 'bg-indigo-50' : 'bg-gray-50' ?> border-b border-gray-100">
-                <h3 class="font-bold <?= $isToday ? 'text-indigo-700' : 'text-gray-700' ?>">
-                    <?php if ($isToday): ?><i class="fas fa-star text-yellow-500 mr-1"></i><?php endif; ?>
-                    <?= dayOfWeekName($day) ?>
-                    <?php if ($isToday): ?><span class="text-xs font-normal text-indigo-400 ml-2">Сегодня</span><?php endif; ?>
-                </h3>
-            </div>
+            <div class="px-4 py-3 <?= $isToday ? 'bg-blue-50' : 'bg-gray-50' ?> border-b border-gray-100">
+    <div class="flex items-start justify-between gap-3">
+        <h3 class="font-bold <?= $isToday ? 'text-blue-800' : 'text-gray-700' ?>">
+            <?php if ($isToday): ?><i class="fas fa-star text-yellow-500 mr-1"></i><?php endif; ?>
+            <?= dayOfWeekName($day) ?>
+            <?php if ($isToday): ?><span class="text-xs font-normal text-blue-500 ml-2">Сегодня</span><?php endif; ?>
+        </h3>
+
+        <span class="text-xs font-medium <?= $isToday ? 'text-blue-600' : 'text-gray-400' ?>">
+            <?= !empty($weekDates[$day]) ? formatDate($weekDates[$day]) : '' ?>
+        </span>
+    </div>
+</div>
             
             <?php if (!empty($dayLessons)): ?>
                 <?php $currentDate = $weekDates[$day] ?? null; ?>
@@ -48,13 +104,27 @@
     </p>
 
     <?php
-    $hw = null;
+$hw = null;
 $lessonClassId = isset($lesson['class_id']) ? (int)$lesson['class_id'] : null;
 
 if (!empty($currentDate) && $lessonClassId && isset($homeworkMap[$currentDate][$lesson['subject_id']][$lessonClassId])) {
     $hw = $homeworkMap[$currentDate][$lesson['subject_id']][$lessonClassId];
 }
-    ?>
+?>
+
+<?php
+$lessonGrades = [];
+if (!empty($currentDate) && $lessonClassId && isset($gradesMap[$currentDate][$lesson['subject_id']][$lessonClassId])) {
+    $lessonGrades = $gradesMap[$currentDate][$lesson['subject_id']][$lessonClassId];
+}
+?>
+
+<?php
+$lessonAttendance = null;
+if (!empty($currentDate) && $lessonClassId && isset($attendanceMap[$currentDate][$lesson['subject_id']][$lessonClassId])) {
+    $lessonAttendance = $attendanceMap[$currentDate][$lesson['subject_id']][$lessonClassId];
+}
+?>
 
     <?php if ($hw): ?>
     <div class="mt-2 p-2 rounded-lg bg-blue-50 border border-blue-100">
@@ -72,27 +142,70 @@ if (!empty($currentDate) && $lessonClassId && isset($homeworkMap[$currentDate][$
 
     </div>
     <?php endif; ?>
+
 </div>
-                    <div class="flex flex-col items-end gap-2 flex-shrink-0">
-    <span class="text-xs text-gray-400">
-        <?= date('H:i', strtotime($lesson['time_start'])) ?>-<?= date('H:i', strtotime($lesson['time_end'])) ?>
+                    <div class="flex flex-col items-end gap-2 flex-shrink-0 min-w-[88px]">
+    <span class="text-xs text-gray-400 text-right leading-tight">
+        <?= date('H:i', strtotime($lesson['time_start'])) ?><br>
+        <?= date('H:i', strtotime($lesson['time_end'])) ?>
     </span>
 
-    <?php if (in_array(currentRole(), ['teacher', 'class_teacher', 'head_teacher']) && !empty($lesson['class_name'])): ?>
-<button type="button"
-        class="px-2.5 py-1 text-[11px] <?= $hw ? 'bg-amber-600 hover:bg-amber-700' : 'bg-blue-700 hover:bg-blue-800' ?> text-white rounded-md transition"
-        onclick="openHomeworkModalFromButton(this)"
-        data-class-name="<?= e($lesson['class_name']) ?>"
-        data-class-id="<?= (int)$lesson['class_id'] ?>"
-        data-subject-id="<?= (int)$lesson['subject_id'] ?>"
-        data-subject-name="<?= e($lesson['subject_name']) ?>"
-        data-lesson-date="<?= e($currentDate ?? '') ?>"
-        data-hw-id="<?= $hw ? (int)$hw['id'] : '' ?>"
-        data-hw-title="<?= e($hw['title'] ?? '') ?>"
-        data-hw-description="<?= e($hw['description'] ?? '') ?>">
-    <i class="fas fa-book-open mr-1"></i> <?= $hw ? 'Изменить Д/З' : 'Задать Д/З' ?>
-</button>
+    <?php if (in_array(currentRole(), ['student', 'parent']) && !empty($lessonGrades)): ?>
+<div class="flex flex-wrap justify-end gap-1">
+    <?php foreach ($lessonGrades as $g): ?>
+        <?php
+        $gradeValue = $g['grade'] ?? null;
+        $gradeComment = $g['comment'] ?? '';
+        ?>
+        <?php if ($gradeValue !== null): ?>
+            <span class="px-2 py-0.5 rounded text-xs font-bold <?= gradeColorClass($gradeValue) ?>"
+                  title="<?= e($gradeComment) ?>">
+                <?= e($gradeValue) ?>
+            </span>
+        <?php endif; ?>
+    <?php endforeach; ?>
+</div>
 <?php endif; ?>
+
+    <?php if (in_array(currentRole(), ['student', 'parent']) && !empty($lessonAttendance)): ?>
+        <?php
+        $attLabel = '';
+        $attClass = '';
+
+        if ($lessonAttendance['status'] === 'absent') {
+            $attLabel = 'Н';
+            $attClass = 'bg-red-100 text-red-700 border border-red-200';
+        } elseif ($lessonAttendance['status'] === 'excused') {
+            $attLabel = 'НБ';
+            $attClass = 'bg-blue-100 text-blue-700 border border-blue-200';
+        }
+        ?>
+
+        <?php if ($attLabel): ?>
+        <div class="mt-1">
+            <span class="px-2 py-0.5 rounded text-xs font-bold <?= $attClass ?>">
+                <?= $attLabel ?>
+            </span>
+        </div>
+        <?php endif; ?>
+    <?php endif; ?>
+
+    <?php if (in_array(currentRole(), ['teacher', 'class_teacher', 'head_teacher']) && !empty($lesson['class_name'])): ?>
+    <button type="button"
+            class="px-2.5 py-1 text-[11px] <?= $hw ? 'bg-amber-600 hover:bg-amber-700' : 'bg-blue-700 hover:bg-blue-800' ?> text-white rounded-md transition"
+            onclick="openHomeworkModalFromButton(this)"
+            data-class-name="<?= e($lesson['class_name']) ?>"
+            data-class-id="<?= (int)$lesson['class_id'] ?>"
+            data-subject-id="<?= (int)$lesson['subject_id'] ?>"
+            data-subject-name="<?= e($lesson['subject_name']) ?>"
+            data-lesson-date="<?= e($currentDate ?? '') ?>"
+            data-hw-id="<?= $hw ? (int)$hw['id'] : '' ?>"
+            data-hw-title="<?= e($hw['title'] ?? '') ?>"
+            data-hw-description="<?= e($hw['description'] ?? '') ?>"
+            data-lesson-order="<?= (int)$lesson['lesson_order'] ?>">
+        <i class="fas fa-book-open mr-1"></i> <?= $hw ? 'Изменить Д/З' : 'Задать Д/З' ?>
+    </button>
+    <?php endif; ?>
 </div>
                 </div>
                 <?php endforeach; ?>
@@ -135,6 +248,7 @@ if (!empty($currentDate) && $lessonClassId && isset($homeworkMap[$currentDate][$
                 <input type="hidden" name="subject_id" id="hwSubjectId">
                 <input type="hidden" name="homework_date" id="hwDate">
                 <input type="hidden" name="homework_id" id="hwId">
+                <input type="hidden" name="lesson_order" id="hwLessonOrder">
 
                 <div class="bg-blue-50 border border-blue-100 rounded-lg p-3 text-sm text-gray-700">
                     <p><span class="font-semibold">Класс:</span> <span id="hwClassName"></span></p>
@@ -188,11 +302,12 @@ function openHomeworkModalFromButton(btn) {
     const hwId = btn.dataset.hwId || '';
     const hwTitle = btn.dataset.hwTitle || '';
     const hwDescription = btn.dataset.hwDescription || '';
+    const lessonOrder = btn.dataset.lessonOrder || '';
 
-    openHomeworkModal(className, classId, subjectId, subjectName, lessonDate, hwId, hwTitle, hwDescription);
+    openHomeworkModal(className, classId, subjectId, subjectName, lessonDate, lessonOrder, hwId, hwTitle, hwDescription);
 }
 
-function openHomeworkModal(className, classId, subjectId, subjectName, lessonDate, hwId = '', hwTitle = '', hwDescription = '') {
+function openHomeworkModal(className, classId, subjectId, subjectName, lessonDate, lessonOrder = '', hwId = '', hwTitle = '', hwDescription = '') {
     const modal = document.getElementById('homeworkModal');
     if (!modal) {
         console.error('Модальное окно homeworkModal не найдено');
@@ -209,6 +324,8 @@ function openHomeworkModal(className, classId, subjectId, subjectName, lessonDat
     document.getElementById('hwLessonDateText').textContent = formatDateRu(lessonDate);
 
     document.getElementById('hwId').value = hwId || '';
+
+    document.getElementById('hwLessonOrder').value = lessonOrder;
 
     const titleInput = document.querySelector('#homeworkModal input[name="title"]');
     const descInput = document.querySelector('#homeworkModal textarea[name="description"]');

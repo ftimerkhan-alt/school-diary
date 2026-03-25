@@ -43,24 +43,27 @@ class AttendanceModel {
     /**
      * Сохраняет/обновляет посещаемость
      */
-    public function save($studentId, $subjectId, $date, $status, $comment = null, $markedBy = null) {
-        $stmt = $this->db->prepare("
-            INSERT INTO attendance (student_id, subject_id, date, status, comment, marked_by)
-            VALUES (:student_id, :subject_id, :date, :status, :comment, :marked_by)
-            ON DUPLICATE KEY UPDATE 
-                status = VALUES(status), 
-                comment = VALUES(comment),
-                marked_by = VALUES(marked_by)
-        ");
-        return $stmt->execute([
-            ':student_id' => $studentId,
-            ':subject_id' => $subjectId,
-            ':date' => $date,
-            ':status' => $status,
-            ':comment' => $comment,
-            ':marked_by' => $markedBy,
-        ]);
-    }
+    public function save($studentId, $subjectId, $date, $status, $comment = null, $markedBy = null, $lessonOrder = null) {
+    $stmt = $this->db->prepare("
+        INSERT INTO attendance (student_id, subject_id, date, lesson_order, status, comment, marked_by)
+        VALUES (:student_id, :subject_id, :date, :lesson_order, :status, :comment, :marked_by)
+        ON DUPLICATE KEY UPDATE 
+            status = VALUES(status),
+            comment = VALUES(comment),
+            marked_by = VALUES(marked_by),
+            lesson_order = VALUES(lesson_order)
+    ");
+
+    return $stmt->execute([
+        ':student_id'   => (int)$studentId,
+        ':subject_id'   => (int)$subjectId,
+        ':date'         => $date,
+        ':lesson_order' => $lessonOrder !== null ? (int)$lessonOrder : 1,
+        ':status'       => $status,
+        ':comment'      => $comment,
+        ':marked_by'    => $markedBy,
+    ]);
+}
     
     /**
      * Получает посещаемость ученика

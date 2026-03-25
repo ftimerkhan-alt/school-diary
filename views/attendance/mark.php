@@ -111,16 +111,6 @@
                                         </span>
                                     </label>
                                     <label class="status-label cursor-pointer">
-                                        <input type="radio" name="status[<?= $studentId ?>]" value="late"
-                                               <?= $status === 'late' ? 'checked' : '' ?> class="hidden status-radio"
-                                               onchange="updateRowStyle(this)">
-                                        <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition
-                                                     <?= $status === 'late' ? 'bg-yellow-100 text-yellow-800 border-yellow-300' : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-yellow-50' ?>">
-                                            <i class="fas fa-clock"></i>
-                                            <span class="hidden sm:inline">Опозд.</span>
-                                        </span>
-                                    </label>
-                                    <label class="status-label cursor-pointer">
                                         <input type="radio" name="status[<?= $studentId ?>]" value="excused"
                                                <?= $status === 'excused' ? 'checked' : '' ?> class="hidden status-radio"
                                                onchange="updateRowStyle(this)">

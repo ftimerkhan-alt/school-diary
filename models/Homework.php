@@ -9,32 +9,35 @@ class Homework {
     /**
      * Найти домашнее задание по классу, предмету и дате
      */
-    public function findByClassSubjectDate($classId, $subjectId, $date) {
-        $stmt = $this->db->prepare("
-            SELECT *
-            FROM homework
-            WHERE class_id = :class_id
-              AND subject_id = :subject_id
-              AND homework_date = :homework_date
-            LIMIT 1
-        ");
-        $stmt->execute([
-            ':class_id' => (int)$classId,
-            ':subject_id' => (int)$subjectId,
-            ':homework_date' => $date,
-        ]);
-        return $stmt->fetch();
-    }
+    public function findByClassSubjectDateLesson($classId, $subjectId, $date, $lessonOrder) {
+    $stmt = $this->db->prepare("
+        SELECT *
+        FROM homework
+        WHERE class_id = :class_id
+          AND subject_id = :subject_id
+          AND homework_date = :homework_date
+          AND lesson_order = :lesson_order
+        LIMIT 1
+    ");
+    $stmt->execute([
+        ':class_id' => (int)$classId,
+        ':subject_id' => (int)$subjectId,
+        ':homework_date' => $date,
+        ':lesson_order' => (int)$lessonOrder,
+    ]);
+    return $stmt->fetch();
+}
 
     /**
      * Сохранить или обновить Д/З
      */
     public function save($data) {
-        $existing = $this->findByClassSubjectDate(
-            $data['class_id'],
-            $data['subject_id'],
-            $data['homework_date']
-        );
+        $existing = $this->findByClassSubjectDateLesson(
+    $data['class_id'],
+    $data['subject_id'],
+    $data['homework_date'],
+    $data['lesson_order']
+);
 
         if ($existing) {
             $stmt = $this->db->prepare("
@@ -54,8 +57,8 @@ class Homework {
         }
 
         $stmt = $this->db->prepare("
-            INSERT INTO homework (class_id, subject_id, teacher_id, homework_date, title, description)
-VALUES (:class_id, :subject_id, :teacher_id, :homework_date, :title, :description)
+            INSERT INTO homework (class_id, subject_id, teacher_id, homework_date, lesson_order, title, description)
+VALUES (:class_id, :subject_id, :teacher_id, :homework_date, :lesson_order, :title, :description)
         ");
         $stmt->execute([
             ':class_id' => (int)$data['class_id'],
@@ -64,6 +67,7 @@ VALUES (:class_id, :subject_id, :teacher_id, :homework_date, :title, :descriptio
             ':homework_date' => $data['homework_date'],
             ':title' => $data['title'] ?? null,
             ':description' => $data['description'],
+            ':lesson_order' => (int)$data['lesson_order'],
         ]);
 
         return $this->db->lastInsertId();

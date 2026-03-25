@@ -128,6 +128,7 @@ class GradeController {
             'date'       => post('date'),
             'comment'    => post('comment', ''),
             'grade_type' => post('grade_type', 'current'),
+            'lesson_order' => (int)post('lesson_order'),
         ];
         
         // Определяем teacher_id
@@ -143,6 +144,40 @@ class GradeController {
         } else {
             $data['teacher_id'] = $teacher['id'];
         }
+
+        // Проверяем, есть ли у ученика урок по этому предмету в выбранную дату
+$studentInfo = $this->studentModel->findById($data['student_id']);
+if (!$studentInfo) {
+    echo json_encode(['success' => false, 'error' => 'Ученик не найден']);
+    exit;
+}
+
+$classId = (int)$studentInfo['class_id'];
+$dayOfWeek = (int)date('N', strtotime($data['date'])); // 1=Пн ... 7=Вс
+
+require_once __DIR__ . '/../models/Schedule.php';
+$scheduleModel = new ScheduleModel();
+$classSchedule = $scheduleModel->getByClass($classId);
+
+$hasLesson = false;
+foreach ($classSchedule as $lesson) {
+    if (
+        (int)$lesson['subject_id'] === (int)$data['subject_id'] &&
+        (int)$lesson['teacher_id'] === (int)$data['teacher_id'] &&
+        (int)$lesson['day_of_week'] === $dayOfWeek
+    ) {
+        $hasLesson = true;
+        break;
+    }
+}
+
+if (!$hasLesson) {
+    echo json_encode([
+        'success' => false,
+        'error' => 'На выбранную дату у класса нет этого урока'
+    ]);
+    exit;
+}
         
         // Валидация
         if ($data['grade'] < 1 || $data['grade'] > 5) {

@@ -9,6 +9,7 @@ class AttendanceController {
     private $studentModel;
     private $classModel;
     private $subjectModel;
+    private $scheduleModel;
     
     public function __construct() {
         require_once __DIR__ . '/../models/Attendance.php';
@@ -16,12 +17,14 @@ class AttendanceController {
         require_once __DIR__ . '/../models/Student.php';
         require_once __DIR__ . '/../models/ClassModel.php';
         require_once __DIR__ . '/../models/Subject.php';
+        require_once __DIR__ . '/../models/Schedule.php';
         
         $this->attendanceModel = new AttendanceModel();
         $this->teacherModel = new Teacher();
         $this->studentModel = new Student();
         $this->classModel = new ClassModel();
         $this->subjectModel = new Subject();
+        $this->scheduleModel = new ScheduleModel();
     }
     
     /**
@@ -109,6 +112,32 @@ class AttendanceController {
         $date = post('date');
         $statuses = $_POST['status'] ?? [];
         $comments = $_POST['comment'] ?? [];
+        $lessonOrder = (int)post('lesson_order', 0);
+
+        $teacher = $this->teacherModel->findByUserId(currentUserId());
+$teacherId = $teacher ? (int)$teacher['id'] : null;
+
+$dayOfWeek = (int)date('N', strtotime($date)); // 1=Пн ... 7=Вс
+$classSchedule = $this->scheduleModel->getByClass($classId);
+
+$hasLesson = false;
+foreach ($classSchedule as $lesson) {
+    if (
+        (int)$lesson['subject_id'] === $subjectId &&
+        (int)$lesson['day_of_week'] === $dayOfWeek
+    ) {
+        // для админа не важно кто учитель, для учителя/классного руководителя важно
+        if (isAdmin() || !$teacherId || (int)$lesson['teacher_id'] === $teacherId) {
+            $hasLesson = true;
+            break;
+        }
+    }
+}
+
+if (!$hasLesson) {
+    setFlash('error', 'На выбранную дату у класса нет данного урока');
+    redirect("attendance/mark?class_id={$classId}&subject_id={$subjectId}&date={$date}");
+}
         
         if (!$classId || !$subjectId || !$date) {
             setFlash('error', 'Заполните все обязательные поля');
@@ -124,7 +153,7 @@ class AttendanceController {
             $comment = $comments[$studentId] ?? null;
             
             if (in_array($status, ['present', 'absent', 'late', 'excused'])) {
-                $this->attendanceModel->save($studentId, $subjectId, $date, $status, $comment, $markedBy);
+                $this->attendanceModel->save($studentId, $subjectId, $date, $status, $comment, $markedBy, $lessonOrder);
                 $count++;
             }
         }
