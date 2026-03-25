@@ -149,6 +149,12 @@ switch ($controller) {
             case 'delete':  $ctrl->deleteLesson(); break;
             case 'copy':    $ctrl->copy(); break;
             default:        $ctrl->view();
+            case 'save-homework':
+    $ctrl->saveHomework();
+    break;
+case 'delete-homework':
+    $ctrl->deleteHomework();
+    break;
         }
         break;
     

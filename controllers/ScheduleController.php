@@ -9,6 +9,7 @@ class ScheduleController {
     private $studentModel;
     private $classModel;
     private $subjectModel;
+    private $homeworkModel;
     
     public function __construct() {
         require_once __DIR__ . '/../models/Schedule.php';
@@ -16,12 +17,14 @@ class ScheduleController {
         require_once __DIR__ . '/../models/Student.php';
         require_once __DIR__ . '/../models/ClassModel.php';
         require_once __DIR__ . '/../models/Subject.php';
+        require_once __DIR__ . '/../models/Homework.php';
         
         $this->scheduleModel = new ScheduleModel();
         $this->teacherModel = new Teacher();
         $this->studentModel = new Student();
         $this->classModel = new ClassModel();
         $this->subjectModel = new Subject();
+        $this->homeworkModel = new Homework();
     }
     
     /**
@@ -61,6 +64,8 @@ class ScheduleController {
             $student = $this->studentModel->findByUserId(currentUserId());
             if ($student) $selectedClassId = $student['class_id'];
         }
+
+        
         
         if (!$selectedClassId && !empty($classes)) {
             $selectedClassId = $classes[0]['id'];
@@ -87,48 +92,115 @@ class ScheduleController {
      * Моё расписание (для учителя/ученика/родителя)
      */
     public function mySchedule() {
-        requireAuth();
-        
-        $pageTitle = 'Моё расписание';
-        $role = currentRole();
-        $schedule = [];
-        $title = '';
-        
-        if (in_array($role, ['teacher', 'class_teacher', 'head_teacher'])) {
-            $teacher = $this->teacherModel->findByUserId(currentUserId());
-            if ($teacher) {
-                $schedule = $this->scheduleModel->getByTeacherStructured($teacher['id']);
-                $title = 'Расписание учителя';
-            }
-        } elseif ($role === 'student') {
-            $student = $this->studentModel->findByUserId(currentUserId());
-            if ($student) {
-                $schedule = $this->scheduleModel->getByClassStructured($student['class_id']);
-                $title = 'Расписание класса ' . $student['class_name'];
-            }
-        } elseif ($role === 'parent') {
-            $children = $this->studentModel->getChildrenByParentId(currentUserId());
-            $selectedClassId = (int)get('class_id', 0);
-            
-            if (!$selectedClassId && !empty($children)) {
-                $selectedClassId = $children[0]['class_id'];
-            }
-            
-            if ($selectedClassId) {
-                $schedule = $this->scheduleModel->getByClassStructured($selectedClassId);
-                $cls = $this->classModel->findById($selectedClassId);
-                $title = 'Расписание класса ' . ($cls ? $cls['name'] : '');
+    requireAuth();
+
+    $pageTitle = 'Моё расписание';
+    $role = currentRole();
+    $schedule = [];
+    $title = '';
+    $homeworkMap = [];
+
+    $currentLesson = ScheduleModel::getCurrentLesson();
+    $todayDow = (int)date('N');
+    $lessonTimes = ScheduleModel::getLessonTimes();
+
+    // Даты текущей недели: 1=Пн ... 6=Сб
+    $weekDates = [
+        1 => null,
+        2 => null,
+        3 => null,
+        4 => null,
+        5 => null,
+        6 => null,
+    ];
+
+    $monday = strtotime('monday this week');
+    if ((int)date('N') === 1) {
+        $monday = strtotime('today');
+    }
+
+    for ($i = 1; $i <= 6; $i++) {
+        $weekDates[$i] = date('Y-m-d', strtotime('+' . ($i - 1) . ' day', $monday));
+    }
+
+    if (in_array($role, ['teacher', 'class_teacher', 'head_teacher'])) {
+    $teacher = $this->teacherModel->findByUserId(currentUserId());
+    if ($teacher) {
+        $schedule = $this->scheduleModel->getByTeacherStructured($teacher['id']);
+        $title = 'Моё расписание';
+
+        // Соберём class_id всех классов, которые есть в расписании учителя
+        $teacherClassIds = [];
+        foreach ($schedule as $dayLessons) {
+            foreach ($dayLessons as $lesson) {
+                if (!empty($lesson['class_id'])) {
+                    $teacherClassIds[(int)$lesson['class_id']] = (int)$lesson['class_id'];
+                }
             }
         }
-        
-        $currentLesson = ScheduleModel::getCurrentLesson();
-        $todayDow = (int)date('N');
-        $lessonTimes = ScheduleModel::getLessonTimes();
-        
-        require __DIR__ . '/../views/layout/header.php';
-        require __DIR__ . '/../views/schedule/my-schedule.php';
-        require __DIR__ . '/../views/layout/footer.php';
+
+        // Загружаем Д/З для всех его классов на текущую неделю
+        foreach ($teacherClassIds as $classId) {
+            $homeworks = $this->homeworkModel->getByClassPeriod(
+                $classId,
+                $weekDates[1] ?? date('Y-m-d'),
+                $weekDates[6] ?? date('Y-m-d')
+            );
+
+            foreach ($homeworks as $hw) {
+                $homeworkMap[$hw['homework_date']][$hw['subject_id']][$hw['class_id']] = $hw;
+            }
+        }
     }
+
+    } elseif ($role === 'student') {
+        $student = $this->studentModel->findByUserId(currentUserId());
+        if ($student) {
+            $schedule = $this->scheduleModel->getByClassStructured($student['class_id']);
+            $title = 'Расписание класса ' . $student['class_name'];
+
+            // Домашние задания на текущую неделю
+            $homeworks = $this->homeworkModel->getByClassPeriod(
+                $student['class_id'],
+                $weekDates[1] ?? date('Y-m-d'),
+                $weekDates[6] ?? date('Y-m-d')
+            );
+
+            foreach ($homeworks as $hw) {
+    $homeworkMap[$hw['homework_date']][$hw['subject_id']][$hw['class_id']] = $hw;
+}
+        }
+
+    } elseif ($role === 'parent') {
+        $children = $this->studentModel->getChildrenByParentId(currentUserId());
+        $selectedClassId = (int)get('class_id', 0);
+
+        if (!$selectedClassId && !empty($children)) {
+            $selectedClassId = $children[0]['class_id'];
+        }
+
+        if ($selectedClassId) {
+            $schedule = $this->scheduleModel->getByClassStructured($selectedClassId);
+            $cls = $this->classModel->findById($selectedClassId);
+            $title = 'Расписание класса ' . ($cls ? $cls['name'] : '');
+
+            // Домашние задания на текущую неделю
+            $homeworks = $this->homeworkModel->getByClassPeriod(
+                $selectedClassId,
+                $weekDates[1] ?? date('Y-m-d'),
+                $weekDates[6] ?? date('Y-m-d')
+            );
+
+            foreach ($homeworks as $hw) {
+    $homeworkMap[$hw['homework_date']][$hw['subject_id']][$hw['class_id']] = $hw;
+}
+        }
+    }
+
+    require __DIR__ . '/../views/layout/header.php';
+    require __DIR__ . '/../views/schedule/my-schedule.php';
+    require __DIR__ . '/../views/layout/footer.php';
+}
     
     /**
      * Редактор расписания
@@ -230,4 +302,61 @@ class ScheduleController {
             redirect('schedule/edit?class_id=' . $toClassId);
         }
     }
+    /**
+ * Сохранить домашнее задание
+ */
+public function saveHomework() {
+    requireRole(['admin', 'teacher', 'class_teacher', 'head_teacher']);
+    validateCSRF();
+
+    $teacher = $this->teacherModel->findByUserId(currentUserId());
+    if (!$teacher && !isAdmin()) {
+        setFlash('error', 'Вы не привязаны как учитель');
+        redirect('schedule/my-schedule');
+    }
+
+    $dueDate = trim((string)post('due_date', ''));
+if ($dueDate === '') {
+    $dueDate = null;
+}
+
+$data = [
+    'class_id' => (int)post('class_id'),
+    'subject_id' => (int)post('subject_id'),
+    'teacher_id' => $teacher ? (int)$teacher['id'] : 1,
+    'homework_date' => post('homework_date'),
+    'title' => post('title'),
+    'description' => post('description'),
+];
+
+    if (empty($data['class_id']) || empty($data['subject_id']) || empty($data['homework_date']) || empty($data['description'])) {
+        setFlash('error', 'Заполните обязательные поля домашнего задания');
+        redirect('schedule/my-schedule');
+    }
+
+    try {
+        $this->homeworkModel->save($data);
+        setFlash('success', 'Домашнее задание сохранено');
+    } catch (Exception $e) {
+        setFlash('error', 'Ошибка сохранения домашнего задания: ' . $e->getMessage());
+    }
+
+    redirect('schedule/my-schedule');
+}
+
+/**
+ * Удалить домашнее задание
+ */
+public function deleteHomework() {
+    requireRole(['admin', 'teacher', 'class_teacher', 'head_teacher']);
+    validateCSRF();
+
+    $id = (int)post('id');
+    if ($id > 0) {
+        $this->homeworkModel->delete($id);
+        setFlash('success', 'Домашнее задание удалено');
+    }
+
+    redirect('schedule/my-schedule');
+}
 }
