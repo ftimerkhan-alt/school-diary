@@ -9,6 +9,7 @@ class GradeController {
     private $studentModel;
     private $classModel;
     private $subjectModel;
+    private $termModel;
     
     public function __construct() {
         require_once __DIR__ . '/../models/Grade.php';
@@ -16,12 +17,14 @@ class GradeController {
         require_once __DIR__ . '/../models/Student.php';
         require_once __DIR__ . '/../models/ClassModel.php';
         require_once __DIR__ . '/../models/Subject.php';
+        require_once __DIR__ . '/../models/Term.php';
         
         $this->gradeModel = new GradeModel();
         $this->teacherModel = new Teacher();
         $this->studentModel = new Student();
         $this->classModel = new ClassModel();
         $this->subjectModel = new Subject();
+        $this->termModel = new Term();
     }
     
     /**
@@ -251,52 +254,125 @@ if (!$hasLesson) {
      * Мои оценки (для ученика и родителя)
      */
     public function myGrades() {
-        requireRole(['student', 'parent']);
-        
-        $pageTitle = 'Мои оценки';
-        $role = currentRole();
-        
-        $studentId = null;
-        $student = null;
-        $children = [];
-        
-        if ($role === 'student') {
-            $student = $this->studentModel->findByUserId(currentUserId());
-            if ($student) $studentId = $student['id'];
-        } elseif ($role === 'parent') {
-            $children = $this->studentModel->getChildrenByParentId(currentUserId());
-            $selectedStudentId = (int)get('student_id', 0);
-            
-            if ($selectedStudentId) {
-                // Проверяем, что это ребёнок текущего родителя
-                $childIds = array_column($children, 'id');
-                if (in_array($selectedStudentId, $childIds)) {
-                    $studentId = $selectedStudentId;
-                    $student = $this->studentModel->findById($studentId);
-                }
-            } elseif (!empty($children)) {
-                $studentId = $children[0]['id'];
+    requireRole(['student', 'parent']);
+
+    $pageTitle = 'Мои оценки';
+    $role = currentRole();
+
+    $studentId = null;
+    $student = null;
+    $children = [];
+
+    if ($role === 'student') {
+        $student = $this->studentModel->findByUserId(currentUserId());
+        if ($student) {
+            $studentId = $student['id'];
+        }
+    } elseif ($role === 'parent') {
+        $children = $this->studentModel->getChildrenByParentId(currentUserId());
+        $selectedStudentId = (int)get('student_id', 0);
+
+        if ($selectedStudentId) {
+            $childIds = array_column($children, 'id');
+            if (in_array($selectedStudentId, $childIds)) {
+                $studentId = $selectedStudentId;
                 $student = $this->studentModel->findById($studentId);
             }
-            
-            $pageTitle = 'Оценки ребёнка';
+        } elseif (!empty($children)) {
+            $studentId = $children[0]['id'];
+            $student = $this->studentModel->findById($studentId);
         }
-        
-        $gradesBySubject = [];
-        $overallAvg = 0;
-        
-        if ($studentId) {
-            $gradesBySubject = $this->gradeModel->getByStudentGrouped($studentId);
-            
-            $allGrades = [];
-            foreach ($gradesBySubject as $subj) {
-                foreach ($subj['grades'] as $g) $allGrades[] = $g['grade'];
-            }
-            $overallAvg = count($allGrades) > 0 ? round(array_sum($allGrades) / count($allGrades), 2) : 0;
-        }
-        
-        require __DIR__ . '/../views/layout/header.php';
-        require __DIR__ . '/../views/grades/my-grades.php';
-        require __DIR__ . '/../views/layout/footer.php';
+
+        $pageTitle = 'Оценки ребёнка';
     }
+
+    // Учебные годы и четверти
+    $availableYears = $this->termModel->getAvailableYears();
+
+    if (!empty($availableYears)) {
+        $selectedAcademicYear = (int)get('academic_year', $availableYears[0]);
+    } else {
+        $selectedAcademicYear = (int)get('academic_year', currentAcademicYear());
+    }
+
+    $terms = $this->termModel->getByAcademicYear($selectedAcademicYear);
+if (empty($terms)) {
+    $terms = $this->termModel->getAll();
+}
+
+// По умолчанию для ученика/родителя открываем текущую четверть,
+// если term_id явно не передан
+$selectedTermId = (int)get('term_id', -1);
+
+if ($selectedTermId === -1) {
+    $currentTerm = $this->termModel->getCurrent();
+    if ($currentTerm) {
+        $selectedTermId = (int)$currentTerm['id'];
+    } else {
+        $selectedTermId = 0; // если текущая четверть не отмечена, показываем весь год
+    }
+}
+
+$selectedTerm = $selectedTermId ? $this->termModel->findById($selectedTermId) : null;
+
+    // Период
+    if ($selectedTerm) {
+        $dateFrom = $selectedTerm['start_date'];
+        $dateTo = $selectedTerm['end_date'];
+    } else {
+        $dateFrom = $selectedAcademicYear . '-09-01';
+        $dateTo = ($selectedAcademicYear + 1) . '-08-31';
+    }
+
+    $gradesBySubject = [];
+    $overallAvg = 0;
+
+    if ($studentId) {
+        require_once __DIR__ . '/../models/Subject.php';
+        $subjectModel = new Subject();
+
+        $allSubjects = $subjectModel->getAll();
+        $allGrades = $this->gradeModel->getByStudent($studentId);
+
+        // Фильтруем оценки по периоду
+        $filteredGrades = array_filter($allGrades, function($g) use ($dateFrom, $dateTo) {
+            return $g['date'] >= $dateFrom && $g['date'] <= $dateTo;
+        });
+
+        // Сначала создаём все предметы
+        foreach ($allSubjects as $subj) {
+            $gradesBySubject[$subj['id']] = [
+                'name' => $subj['name'],
+                'grades' => []
+            ];
+        }
+
+        // Добавляем оценки по предметам
+        foreach ($filteredGrades as $g) {
+            $subjId = (int)$g['subject_id'];
+
+            if (!isset($gradesBySubject[$subjId])) {
+                $gradesBySubject[$subjId] = [
+                    'name' => $g['subject_name'],
+                    'grades' => []
+                ];
+            }
+
+            $gradesBySubject[$subjId]['grades'][] = $g;
+        }
+
+        // Общий средний балл
+        $allGradeValues = [];
+        foreach ($filteredGrades as $g) {
+            if (isset($g['grade'])) {
+                $allGradeValues[] = $g['grade'];
+            }
+        }
+        $overallAvg = count($allGradeValues) > 0 ? round(array_sum($allGradeValues) / count($allGradeValues), 2) : 0;
+    }
+
+    require __DIR__ . '/../views/layout/header.php';
+    require __DIR__ . '/../views/grades/my-grades.php';
+    require __DIR__ . '/../views/layout/footer.php';
+}
 }

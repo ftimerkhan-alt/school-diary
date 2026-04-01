@@ -14,6 +14,41 @@
         </div>
     </div>
     <?php endif; ?>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+    <form method="GET" action="<?= url('grades/my-grades') ?>" class="flex flex-col lg:flex-row gap-3">
+        <input type="hidden" name="route" value="grades/my-grades">
+
+        <?php if ($role === 'parent' && !empty($studentId)): ?>
+            <input type="hidden" name="student_id" value="<?= (int)$studentId ?>">
+        <?php endif; ?>
+
+        <div class="flex-1">
+            <label class="block text-xs font-semibold text-gray-500 mb-1">Учебный год</label>
+            <select name="academic_year" onchange="this.form.submit()"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                <?php foreach ($availableYears as $year): ?>
+                <option value="<?= $year ?>" <?= $selectedAcademicYear == $year ? 'selected' : '' ?>>
+                    <?= $year ?>/<?= $year + 1 ?>
+                </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+
+        <div class="flex-1">
+            <label class="block text-xs font-semibold text-gray-500 mb-1">Период</label>
+            <select name="term_id" onchange="this.form.submit()"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                <option value="0" <?= $selectedTermId == 0 ? 'selected' : '' ?>>Весь учебный год</option>
+                <?php foreach ($terms as $term): ?>
+                <option value="<?= $term['id'] ?>" <?= $selectedTermId == $term['id'] ? 'selected' : '' ?>>
+                    <?= e($term['name']) ?>
+                </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+    </form>
+</div>
     
     <?php if ($student): ?>
     
@@ -61,22 +96,29 @@
     <?php endif; ?>
     
     <!-- Оценки по предметам -->
-    <?php foreach ($gradesBySubject as $subjId => $subj): 
-        $grades = $subj['grades'];
-        $gradeValues = array_column($grades, 'grade');
-        $avg = round(array_sum($gradeValues) / count($gradeValues), 2);
-    ?>
+<?php foreach ($gradesBySubject as $subjId => $subj): 
+    $grades = $subj['grades'];
+    $gradeValues = array_column($grades, 'grade');
+    $avg = count($gradeValues) > 0 ? round(array_sum($gradeValues) / count($gradeValues), 2) : null;
+?>
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="p-4 border-b border-gray-100 flex items-center justify-between">
             <h3 class="font-bold text-gray-800">
                 <i class="fas fa-book-open text-indigo-400 mr-2"></i><?= e($subj['name']) ?>
             </h3>
-            <div class="flex items-center gap-3">
-                <span class="text-sm text-gray-500"><?= count($grades) ?> <?= plural(count($grades), 'оценка', 'оценки', 'оценок') ?></span>
-                <span class="px-3 py-1 rounded-full text-sm font-bold <?= $avg >= 4 ? 'bg-green-100 text-green-700' : ($avg >= 3 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700') ?>">
-                    Ø <?= $avg ?>
-                </span>
-            </div>
+            <div class="flex items-center gap-3 flex-wrap justify-end">
+    <span class="text-sm text-gray-500"><?= count($grades) ?> <?= plural(count($grades), 'оценка', 'оценки', 'оценок') ?></span>
+
+    <?php if ($avg !== null): ?>
+    <span class="px-3 py-1 rounded-full text-sm font-bold <?= $avg >= 4 ? 'bg-green-100 text-green-700' : ($avg >= 3 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700') ?>">
+         <?= $avg ?>
+    </span>
+    <?php else: ?>
+    <span class="px-3 py-1 rounded-full text-sm font-bold bg-gray-100 text-gray-400">
+        Нет оценок
+    </span>
+    <?php endif; ?>
+</div>
         </div>
         <div class="p-4">
             <div class="flex flex-wrap gap-2">
@@ -95,6 +137,9 @@
                 </div>
                 <?php endforeach; ?>
             </div>
+            <?php if (empty($grades)): ?>
+    <p class="text-sm text-gray-400 mt-3">Оценок за выбранный период нет</p>
+<?php endif; ?>
         </div>
     </div>
     <?php endforeach; ?>

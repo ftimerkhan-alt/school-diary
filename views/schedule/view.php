@@ -32,9 +32,9 @@
     <!-- Расписание по дням -->
     <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
         <?php for ($day = 1; $day <= 6; $day++): 
-            $dayLessons = $schedule[$day] ?? [];
-            $isToday = ($day == $todayDow);
-        ?>
+    $dayLessons = $schedule[$day] ?? [];
+    $isToday = (!empty($weekDates[$day]) && $weekDates[$day] === date('Y-m-d'));
+?>
         <div class="bg-white rounded-xl shadow-sm border <?= $isToday ? 'border-indigo-300 ring-2 ring-indigo-100' : 'border-gray-100' ?> overflow-hidden">
             <div class="px-4 py-3 <?= $isToday ? 'bg-indigo-50' : 'bg-gray-50' ?> border-b border-gray-100">
                 <h3 class="font-bold <?= $isToday ? 'text-indigo-700' : 'text-gray-700' ?>">
